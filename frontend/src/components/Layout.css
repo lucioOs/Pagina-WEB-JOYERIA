@@ -1,0 +1,9 @@
+/* src/components/Layout.css */
+.sidebar {
+  width: 220px;
+  transition: width 0.3s ease;
+}
+.sidebar-collapsed {
+  width: 60px;
+  transition: width 0.3s ease;
+}

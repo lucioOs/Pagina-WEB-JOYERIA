@@ -1,8 +1,8 @@
 const express = require('express');
-const cors = require('cors'); // ✅ nuevo
+const cors = require('cors');
 const { iniciarConexion } = require('./config/db');
 const joyasRoutes = require('./routes/joyas.routes');
-
+const clientesRoutes = require('./routes/clientes.routes'); 
 const app = express();
 const puerto = process.env.PUERTO || 3000;
 
@@ -11,9 +11,11 @@ app.use(express.json());
 
 // Rutas
 app.use('/api/joyas', joyasRoutes);
-
+app.use('/api/clientes', clientesRoutes); 
 app.get('/', (req, res) => {
   res.send('API REST Joyería funcionando');
+
+
 });
 
 iniciarConexion();

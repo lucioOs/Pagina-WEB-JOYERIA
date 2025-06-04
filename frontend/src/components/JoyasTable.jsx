@@ -17,6 +17,15 @@ const JoyasTable = () => {
   const [materiales, setMateriales] = useState([]);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+  // 🔢 Paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const joyasPorPagina = 10;
+  const indexUltima = paginaActual * joyasPorPagina;
+  const indexPrimera = indexUltima - joyasPorPagina;
+  const joyasActuales = joyasFiltradas.slice(indexPrimera, indexUltima);
+  const totalPaginas = Math.ceil(joyasFiltradas.length / joyasPorPagina);
+  const cambiarPagina = (n) => { if (n >= 1 && n <= totalPaginas) setPaginaActual(n); };
+
   const mostrarToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type }), 3000);
@@ -53,6 +62,7 @@ const JoyasTable = () => {
   const manejarBusqueda = e => {
     const texto = e.target.value.toLowerCase();
     setFiltro(texto);
+    setPaginaActual(1);
     setJoyasFiltradas(joyas.filter(j => j.NOMBRE.toLowerCase().includes(texto)));
   };
 
@@ -105,7 +115,7 @@ const JoyasTable = () => {
 
   return (
     <div className="container mt-5">
-      <h2 className="text-center mb-4">Catálogo de Joyas 💎</h2>
+      <h2 className="text-center mb-4">Catálogo de Joyas </h2>
 
       {toast.show && (
         <div className={`alert alert-${toast.type} position-fixed top-0 end-0 m-3`}>{toast.message}</div>
@@ -127,9 +137,9 @@ const JoyasTable = () => {
           </tr>
         </thead>
         <tbody className="text-center align-middle">
-          {joyasFiltradas.map((joya, index) => (
+          {joyasActuales.map((joya, index) => (
             <tr key={index}>
-              <td>{index + 1}</td>
+              <td>{indexPrimera + index + 1}</td>
               <td>{joya.NOMBRE}</td>
               <td>{joya.TIPO}</td>
               <td>${joya.PRECIO}</td>
@@ -143,6 +153,21 @@ const JoyasTable = () => {
           ))}
         </tbody>
       </table>
+
+      {/* Paginación */}
+      <div className="d-flex justify-content-center mt-3">
+        <button className="btn btn-secondary mx-1" onClick={() => cambiarPagina(paginaActual - 1)} disabled={paginaActual === 1}>◀</button>
+        {[...Array(totalPaginas)].map((_, i) => (
+          <button
+            key={i}
+            className={`btn btn-${paginaActual === i + 1 ? 'dark' : 'light'} mx-1`}
+            onClick={() => cambiarPagina(i + 1)}
+          >
+            {i + 1}
+          </button>
+        ))}
+        <button className="btn btn-secondary mx-1" onClick={() => cambiarPagina(paginaActual + 1)} disabled={paginaActual === totalPaginas}>▶</button>
+      </div>
 
       <button className="btn btn-danger rounded-circle position-fixed bottom-0 end-0 m-5 shadow-lg"
         data-bs-toggle="modal" data-bs-target="#modalAgregar" onClick={() => {

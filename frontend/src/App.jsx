@@ -1,11 +1,30 @@
-import React from "react";
-import JoyasTable from "./components/JoyasTable";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import JoyasTable from './components/JoyasTable';
+import ClientesTable from './components/ClientesTable';
+import Login from './components/Login';
+
+
+const VentasTable = () => <h2>Ventas (en construcción)</h2>;
+
+const Protegido = ({ children }) => {
+  const autenticado = localStorage.getItem('autenticado') === 'true';
+  return autenticado ? children : <Navigate to="/" />;
+};
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <JoyasTable />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Protegido><Layout /></Protegido>}>
+          <Route path="joyas" element={<JoyasTable />} />
+          <Route path="clientes" element={<ClientesTable />} />
+          <Route path="ventas" element={<VentasTable />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
