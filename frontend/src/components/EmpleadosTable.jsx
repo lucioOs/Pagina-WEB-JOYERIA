@@ -10,6 +10,8 @@ const EmpleadosTable = () => {
   const [busqueda, setBusqueda] = useState('');
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [roles, setRoles] = useState([]);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const empleadosPorPagina = 10;
 
   const URL = 'http://localhost:3000/api/empleados';
   const ROL_URL = 'http://localhost:3000/api/roles';
@@ -29,18 +31,13 @@ const EmpleadosTable = () => {
     try {
       const res = await fetch(ROL_URL);
       const data = await res.json();
-      // Convertir el arreglo a objetos si vienen como arrays [CLAVE, NOMBRE]
-      const parsed = data.map(r => ({ CLAVE: r[0], NOMBRE: r[1] }));
-      setRoles(parsed);
+      setRoles(data); // ✅ CORREGIDO: los datos ya vienen con CLAVE y NOMBRE
     } catch (err) {
       console.error('Error cargando roles', err);
     }
   };
 
-  const generarClaveUnica = () => {
-    const sufijo = Math.floor(Math.random() * 9000) + 1000;
-    return `EMP${sufijo}`;
-  };
+  const generarClaveUnica = () => `EMP${Math.floor(Math.random() * 9000) + 1000}`;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -91,6 +88,32 @@ const EmpleadosTable = () => {
     );
   });
 
+  const totalPaginas = Math.ceil(empleadosFiltrados.length / empleadosPorPagina);
+  const indiceInicial = (paginaActual - 1) * empleadosPorPagina;
+  const empleadosEnPagina = empleadosFiltrados.slice(indiceInicial, indiceInicial + empleadosPorPagina);
+
+  const renderPaginacion = () => (
+    <ul className="pagination justify-content-center mt-3">
+      <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+        <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)}>
+          ◀
+        </button>
+      </li>
+      {[...Array(totalPaginas)].map((_, i) => (
+        <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(i + 1)}>
+            {i + 1}
+          </button>
+        </li>
+      ))}
+      <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+        <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)}>
+          ▶
+        </button>
+      </li>
+    </ul>
+  );
+
   return (
     <div className="container position-relative">
       <h2 className="text-center my-4">Catálogo de Empleados</h2>
@@ -118,9 +141,9 @@ const EmpleadosTable = () => {
           </tr>
         </thead>
         <tbody>
-          {empleadosFiltrados.map((emp, index) => (
+          {empleadosEnPagina.map((emp, index) => (
             <tr key={emp.CLAVE}>
-              <td>{index + 1}</td>
+              <td>{indiceInicial + index + 1}</td>
               <td>{emp.CLAVE}</td>
               <td>{emp.NOMBRE}</td>
               <td>{emp.APELLIDO_PAT}</td>
@@ -133,6 +156,8 @@ const EmpleadosTable = () => {
           ))}
         </tbody>
       </table>
+
+      {renderPaginacion()}
 
       <button
         className="btn btn-danger rounded-circle position-fixed"
