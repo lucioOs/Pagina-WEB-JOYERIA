@@ -123,9 +123,8 @@ const eliminarCliente = async (req, res) => {
       res.send('✅ Cliente eliminado correctamente');
     }
   } catch (err) {
-  console.error('Error detallado:', err);
-  res.status(500).send('Error al eliminar cliente: ' + err.message);
-}
+    console.error('Error detallado:', err);
+    res.status(500).send('Error al eliminar cliente: ' + err.message);
   } finally {
     if (conexion) await conexion.close();
   }

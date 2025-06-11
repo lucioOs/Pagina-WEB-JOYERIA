@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import JoyasTable from './components/JoyasTable';
 import ClientesTable from './components/ClientesTable';
+import EmpleadosTable from './components/EmpleadosTable';
 import Login from './components/Login';
 
 
@@ -21,6 +22,7 @@ function App() {
         <Route path="/" element={<Protegido><Layout /></Protegido>}>
           <Route path="joyas" element={<JoyasTable />} />
           <Route path="clientes" element={<ClientesTable />} />
+          <Route path="/empleados" element={<EmpleadosTable />} />
           <Route path="ventas" element={<VentasTable />} />
         </Route>
       </Routes>

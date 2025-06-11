@@ -113,7 +113,7 @@ const ClientesTable = () => {
 
   return (
     <div className="container mt-5">
-      <h2 className="text-center mb-4">Catálogo de Clientes 🧑‍💼</h2>
+      <h2 className="text-center mb-4">Catálogo de Clientes </h2>
 
       {toast.show && (
         <div className={`alert alert-${toast.type} position-fixed top-0 end-0 m-3`}>{toast.message}</div>

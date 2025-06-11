@@ -13,4 +13,8 @@ async function iniciarConexion() {
   }
 }
 
-module.exports = { oracledb, iniciarConexion };
+module.exports = {
+  oracledb,
+  iniciarConexion,
+  getConnection: () => oracledb.getConnection()
+};

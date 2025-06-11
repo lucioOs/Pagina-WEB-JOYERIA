@@ -1,21 +1,45 @@
-// src/components/Layout.jsx
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaGem, FaUsers, FaShoppingCart, FaSignOutAlt } from 'react-icons/fa';
+import {
+  FaGem, FaUsers, FaUserTie, FaShoppingCart, FaSignOutAlt
+} from 'react-icons/fa';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [
-    { path: '/joyas', label: 'Joyas', icon: <FaGem /> },
-    { path: '/clientes', label: 'Clientes', icon: <FaUsers /> },
-    { path: '/ventas', label: 'Ventas', icon: <FaShoppingCart /> }
+  const secciones = [
+    {
+      titulo: 'Inventario',
+      items: [
+        { path: '/joyas', label: 'Joyas', icon: <FaGem /> },
+        { path: '/tipos', label: 'Tipos de joya', icon: <FaGem /> },
+        { path: '/materiales', label: 'Materiales', icon: <FaGem /> },
+      ]
+    },
+    {
+      titulo: 'Clientes',
+      items: [
+        { path: '/clientes', label: 'Clientes', icon: <FaUsers /> },
+      ]
+    },
+    {
+      titulo: 'Empleados',
+      items: [
+        { path: '/empleados', label: 'Empleados', icon: <FaUserTie /> },
+      ]
+    },
+    {
+      titulo: 'Ventas',
+      items: [
+        { path: '/ventas', label: 'Ventas', icon: <FaShoppingCart /> },
+      ]
+    },
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('usuario'); // o la clave que uses para almacenar el login
+    localStorage.removeItem('autenticado'); // clave correcta
     navigate('/');
   };
 
@@ -24,16 +48,20 @@ const Layout = () => {
       {/* Sidebar */}
       <div className="bg-dark text-white d-flex flex-column justify-content-between p-3" style={{ width: '250px' }}>
         <div>
-          <h4 className="text-center mb-4">Joyería </h4>
+          <h4 className="text-center mb-4">Joyería</h4>
           <ul className="nav flex-column">
-            {navItems.map(item => (
-              <li className="nav-item" key={item.path}>
-                <Link
-                  className={`nav-link text-white d-flex align-items-center mb-2 ${location.pathname === item.path ? 'active fw-bold bg-secondary rounded' : ''}`}
-                  to={item.path}
-                >
-                  <span className="me-2">{item.icon}</span> {item.label}
-                </Link>
+            {secciones.map((seccion, i) => (
+              <li key={i}>
+                <h6 className="text-white mt-4 mb-2">{seccion.titulo}</h6>
+                {seccion.items.map(item => (
+                  <Link
+                    key={item.path}
+                    className={`nav-link text-white d-flex align-items-center mb-1 ps-3 ${location.pathname === item.path ? 'fw-bold bg-secondary rounded' : ''}`}
+                    to={item.path}
+                  >
+                    <span className="me-2">{item.icon}</span> {item.label}
+                  </Link>
+                ))}
               </li>
             ))}
           </ul>
@@ -44,7 +72,7 @@ const Layout = () => {
         </button>
       </div>
 
-      {/* Main Content */}
+      {/* Contenido principal */}
       <div className="flex-grow-1 p-4">
         <Outlet />
       </div>
