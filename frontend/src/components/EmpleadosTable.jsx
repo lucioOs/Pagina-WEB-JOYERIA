@@ -31,7 +31,7 @@ const EmpleadosTable = () => {
     try {
       const res = await fetch(ROL_URL);
       const data = await res.json();
-      setRoles(data); // ✅ CORREGIDO: los datos ya vienen con CLAVE y NOMBRE
+      setRoles(data);
     } catch (err) {
       console.error('Error cargando roles', err);
     }
@@ -47,24 +47,50 @@ const EmpleadosTable = () => {
     e.preventDefault();
     const metodo = editando ? 'PUT' : 'POST';
     const endpoint = editando ? `${URL}/${claveEditando}` : URL;
-    const payload = editando ? form : { ...form, CLAVE: generarClaveUnica() };
 
-    const res = await fetch(endpoint, {
-      method: metodo,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    const claveRol = roles.find(r => r.NOMBRE === form.ROL)?.CLAVE;
 
-    if (res.ok) {
-      obtenerEmpleados();
-      setForm({});
-      setEditando(false);
-      setMostrarFormulario(false);
+    if (!form.NOMBRE || !form.CORREO || !claveRol) {
+      alert('❌ Error al guardar: Faltan campos obligatorios');
+      return;
+    }
+
+    const payload = {
+      ...(editando ? {} : { CLAVE: generarClaveUnica() }),
+      NOMBRE: form.NOMBRE,
+      APELLIDO_PAT: form.APELLIDO_PAT || '',
+      CORREO: form.CORREO,
+      CLAVE_ROL: claveRol,
+    };
+
+    try {
+      const res = await fetch(endpoint, {
+        method: metodo,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        obtenerEmpleados();
+        setForm({});
+        setEditando(false);
+        setMostrarFormulario(false);
+      } else {
+        const msg = await res.text();
+        alert('❌ Error al guardar: ' + msg);
+      }
+    } catch (err) {
+      alert('❌ Error de red');
     }
   };
 
   const handleEditar = (empleado) => {
-    setForm(empleado);
+    setForm({
+      NOMBRE: empleado.NOMBRE,
+      APELLIDO_PAT: empleado.APELLIDO_PAT,
+      CORREO: empleado.CORREO,
+      ROL: empleado.ROL
+    });
     setEditando(true);
     setClaveEditando(empleado.CLAVE);
     setMostrarFormulario(true);
@@ -74,6 +100,7 @@ const EmpleadosTable = () => {
     if (window.confirm('¿Eliminar empleado?')) {
       const res = await fetch(`${URL}/${clave}`, { method: 'DELETE' });
       if (res.ok) obtenerEmpleados();
+      else alert('❌ Error al eliminar');
     }
   };
 
@@ -92,32 +119,9 @@ const EmpleadosTable = () => {
   const indiceInicial = (paginaActual - 1) * empleadosPorPagina;
   const empleadosEnPagina = empleadosFiltrados.slice(indiceInicial, indiceInicial + empleadosPorPagina);
 
-  const renderPaginacion = () => (
-    <ul className="pagination justify-content-center mt-3">
-      <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
-        <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)}>
-          ◀
-        </button>
-      </li>
-      {[...Array(totalPaginas)].map((_, i) => (
-        <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
-          <button className="page-link" onClick={() => setPaginaActual(i + 1)}>
-            {i + 1}
-          </button>
-        </li>
-      ))}
-      <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
-        <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)}>
-          ▶
-        </button>
-      </li>
-    </ul>
-  );
-
   return (
     <div className="container position-relative">
       <h2 className="text-center my-4">Catálogo de Empleados</h2>
-
       <input
         type="text"
         placeholder="Buscar..."
@@ -129,15 +133,8 @@ const EmpleadosTable = () => {
       <table className="table table-bordered text-center">
         <thead className="table-dark">
           <tr>
-            <th>#</th>
-            <th>CLAVE</th>
-            <th>NOMBRE</th>
-            <th>APELLIDO PAT</th>
-            <th>CORREO</th>
-            <th>ROL</th>
-            <th>Ver</th>
-            <th>Editar</th>
-            <th>Eliminar</th>
+            <th>#</th><th>CLAVE</th><th>NOMBRE</th><th>APELLIDO PAT</th><th>CORREO</th><th>ROL</th>
+            <th>Ver</th><th>Editar</th><th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
@@ -157,8 +154,22 @@ const EmpleadosTable = () => {
         </tbody>
       </table>
 
-      {renderPaginacion()}
+      {/* Paginación */}
+      <ul className="pagination justify-content-center mt-3">
+        <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)}>◀</button>
+        </li>
+        {[...Array(totalPaginas)].map((_, i) => (
+          <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+            <button className="page-link" onClick={() => setPaginaActual(i + 1)}>{i + 1}</button>
+          </li>
+        ))}
+        <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)}>▶</button>
+        </li>
+      </ul>
 
+      {/* Botón flotante */}
       <button
         className="btn btn-danger rounded-circle position-fixed"
         style={{ bottom: '40px', right: '40px', width: '60px', height: '60px' }}
@@ -171,6 +182,7 @@ const EmpleadosTable = () => {
         <FaPlus />
       </button>
 
+      {/* Modal formulario */}
       {mostrarFormulario && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -186,10 +198,10 @@ const EmpleadosTable = () => {
                 <input name="APELLIDO_PAT" placeholder="APELLIDO PAT" value={form.APELLIDO_PAT || ''} onChange={handleChange} className="form-control" />
               </div>
               <div className="col-md-6">
-                <input name="CORREO" placeholder="CORREO" value={form.CORREO || ''} onChange={handleChange} className="form-control" />
+                <input name="CORREO" placeholder="CORREO" value={form.CORREO || ''} onChange={handleChange} required className="form-control" />
               </div>
               <div className="col-md-6">
-                <select name="ROL" value={form.ROL || ''} onChange={handleChange} className="form-select" required>
+                <select name="ROL" value={form.ROL || ''} onChange={handleChange} required className="form-select">
                   <option value="">Seleccione un rol</option>
                   {roles.map(r => (
                     <option key={r.CLAVE} value={r.NOMBRE}>{r.NOMBRE}</option>
