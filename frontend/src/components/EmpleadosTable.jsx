@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEye, FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
-import './EmpleadosModal.css';
+import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 
 const EmpleadosTable = () => {
   const [empleados, setEmpleados] = useState([]);
@@ -11,7 +10,7 @@ const EmpleadosTable = () => {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [roles, setRoles] = useState([]);
   const [paginaActual, setPaginaActual] = useState(1);
-  const empleadosPorPagina = 10;
+  const porPagina = 10;
 
   const URL = 'http://localhost:3000/api/empleados';
   const ROL_URL = 'http://localhost:3000/api/roles';
@@ -28,13 +27,9 @@ const EmpleadosTable = () => {
   };
 
   const obtenerRoles = async () => {
-    try {
-      const res = await fetch(ROL_URL);
-      const data = await res.json();
-      setRoles(data);
-    } catch (err) {
-      console.error('Error cargando roles', err);
-    }
+    const res = await fetch(ROL_URL);
+    const data = await res.json();
+    setRoles(data);
   };
 
   const generarClaveUnica = () => `EMP${Math.floor(Math.random() * 9000) + 1000}`;
@@ -47,40 +42,32 @@ const EmpleadosTable = () => {
     e.preventDefault();
     const metodo = editando ? 'PUT' : 'POST';
     const endpoint = editando ? `${URL}/${claveEditando}` : URL;
-
     const claveRol = roles.find(r => r.NOMBRE === form.ROL)?.CLAVE;
 
-    if (!form.NOMBRE || !form.CORREO || !claveRol) {
-      alert('❌ Error al guardar: Faltan campos obligatorios');
-      return;
-    }
+    if (!form.NOMBRE || !form.CORREO || !claveRol) return alert('❌ Faltan datos');
 
     const payload = {
       ...(editando ? {} : { CLAVE: generarClaveUnica() }),
       NOMBRE: form.NOMBRE,
       APELLIDO_PAT: form.APELLIDO_PAT || '',
       CORREO: form.CORREO,
-      CLAVE_ROL: claveRol,
+      CLAVE_ROL: claveRol
     };
 
-    try {
-      const res = await fetch(endpoint, {
-        method: metodo,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch(endpoint, {
+      method: metodo,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      if (res.ok) {
-        obtenerEmpleados();
-        setForm({});
-        setEditando(false);
-        setMostrarFormulario(false);
-      } else {
-        const msg = await res.text();
-        alert('❌ Error al guardar: ' + msg);
-      }
-    } catch (err) {
-      alert('❌ Error de red');
+    if (res.ok) {
+      obtenerEmpleados();
+      setForm({});
+      setEditando(false);
+      setMostrarFormulario(false);
+    } else {
+      const msg = await res.text();
+      alert('❌ Error: ' + msg);
     }
   };
 
@@ -100,24 +87,22 @@ const EmpleadosTable = () => {
     if (window.confirm('¿Eliminar empleado?')) {
       const res = await fetch(`${URL}/${clave}`, { method: 'DELETE' });
       if (res.ok) obtenerEmpleados();
-      else alert('❌ Error al eliminar');
     }
   };
 
   const empleadosFiltrados = empleados.filter(emp => {
-    const termino = busqueda.toLowerCase();
+    const texto = busqueda.toLowerCase();
     return (
-      emp.CLAVE?.toLowerCase().includes(termino) ||
-      emp.NOMBRE?.toLowerCase().includes(termino) ||
-      emp.APELLIDO_PAT?.toLowerCase().includes(termino) ||
-      emp.CORREO?.toLowerCase().includes(termino) ||
-      emp.ROL?.toLowerCase().includes(termino)
+      (emp.CLAVE || '').toLowerCase().includes(texto) ||
+      (emp.NOMBRE || '').toLowerCase().includes(texto) ||
+      (emp.APELLIDO_PAT || '').toLowerCase().includes(texto) ||
+      (emp.CORREO || '').toLowerCase().includes(texto) ||
+      (emp.ROL || '').toLowerCase().includes(texto)
     );
   });
 
-  const totalPaginas = Math.ceil(empleadosFiltrados.length / empleadosPorPagina);
-  const indiceInicial = (paginaActual - 1) * empleadosPorPagina;
-  const empleadosEnPagina = empleadosFiltrados.slice(indiceInicial, indiceInicial + empleadosPorPagina);
+  const totalPaginas = Math.ceil(empleadosFiltrados.length / porPagina);
+  const empleadosPagina = empleadosFiltrados.slice((paginaActual - 1) * porPagina, paginaActual * porPagina);
 
   return (
     <div className="container position-relative">
@@ -130,32 +115,34 @@ const EmpleadosTable = () => {
         onChange={(e) => setBusqueda(e.target.value)}
       />
 
-      <table className="table table-bordered text-center">
+      <table className="table table-bordered text-center align-middle">
         <thead className="table-dark">
           <tr>
             <th>#</th><th>CLAVE</th><th>NOMBRE</th><th>APELLIDO PAT</th><th>CORREO</th><th>ROL</th>
-            <th>Ver</th><th>Editar</th><th>Eliminar</th>
+            <th>Editar</th><th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
-          {empleadosEnPagina.map((emp, index) => (
+          {empleadosPagina.map((emp, i) => (
             <tr key={emp.CLAVE}>
-              <td>{indiceInicial + index + 1}</td>
+              <td>{(paginaActual - 1) * porPagina + i + 1}</td>
               <td>{emp.CLAVE}</td>
               <td>{emp.NOMBRE}</td>
               <td>{emp.APELLIDO_PAT}</td>
               <td>{emp.CORREO}</td>
               <td>{emp.ROL}</td>
-              <td><button className="btn btn-outline-primary"><FaEye /></button></td>
-              <td><button onClick={() => handleEditar(emp)} className="btn btn-warning"><FaEdit /></button></td>
-              <td><button onClick={() => handleEliminar(emp.CLAVE)} className="btn btn-danger"><FaTrash /></button></td>
+              <td><button className="btn btn-warning" onClick={() => handleEditar(emp)}><FaEdit /></button></td>
+              <td><button className="btn btn-danger" onClick={() => handleEliminar(emp.CLAVE)}><FaTrash /></button></td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {/* Paginación */}
-      <ul className="pagination justify-content-center mt-3">
+      <ul className="pagination justify-content-center">
+        <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(1)}>⏮</button>
+        </li>
         <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
           <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)}>◀</button>
         </li>
@@ -167,12 +154,15 @@ const EmpleadosTable = () => {
         <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
           <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)}>▶</button>
         </li>
+        <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(totalPaginas)}>⏭</button>
+        </li>
       </ul>
 
-      {/* Botón flotante */}
       <button
-        className="btn btn-danger rounded-circle position-fixed"
-        style={{ bottom: '40px', right: '40px', width: '60px', height: '60px' }}
+        title="Agregar nuevo empleado"
+        className="btn btn-success rounded-circle position-fixed shadow"
+        style={{ bottom: 40, right: 40 }}
         onClick={() => {
           setForm({});
           setEditando(false);
@@ -182,36 +172,33 @@ const EmpleadosTable = () => {
         <FaPlus />
       </button>
 
-      {/* Modal formulario */}
       {mostrarFormulario && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-header d-flex justify-content-between align-items-center mb-2">
+            <div className="d-flex justify-content-between mb-2">
               <h5>{editando ? 'Editar empleado' : 'Agregar nuevo empleado'}</h5>
-              <button onClick={() => setMostrarFormulario(false)} className="btn btn-sm"><FaTimes /></button>
+              <button onClick={() => setMostrarFormulario(false)} className="btn"><FaTimes /></button>
             </div>
             <form onSubmit={handleSubmit} className="row g-2">
               <div className="col-md-6">
-                <input name="NOMBRE" placeholder="NOMBRE" value={form.NOMBRE || ''} onChange={handleChange} required className="form-control" />
+                <input name="NOMBRE" placeholder="Nombre" value={form.NOMBRE || ''} onChange={handleChange} className="form-control" required />
               </div>
               <div className="col-md-6">
-                <input name="APELLIDO_PAT" placeholder="APELLIDO PAT" value={form.APELLIDO_PAT || ''} onChange={handleChange} className="form-control" />
+                <input name="APELLIDO_PAT" placeholder="Apellido Paterno" value={form.APELLIDO_PAT || ''} onChange={handleChange} className="form-control" />
               </div>
               <div className="col-md-6">
-                <input name="CORREO" placeholder="CORREO" value={form.CORREO || ''} onChange={handleChange} required className="form-control" />
+                <input name="CORREO" placeholder="Correo" value={form.CORREO || ''} onChange={handleChange} className="form-control" required />
               </div>
               <div className="col-md-6">
-                <select name="ROL" value={form.ROL || ''} onChange={handleChange} required className="form-select">
-                  <option value="">Seleccione un rol</option>
+                <select name="ROL" value={form.ROL || ''} onChange={handleChange} className="form-select" required>
+                  <option value="">Seleccionar rol</option>
                   {roles.map(r => (
                     <option key={r.CLAVE} value={r.NOMBRE}>{r.NOMBRE}</option>
                   ))}
                 </select>
               </div>
-              <div className="col-md-12 d-grid mt-3">
-                <button type="submit" className="btn btn-success">
-                  {editando ? 'Actualizar' : 'Guardar'}
-                </button>
+              <div className="col-12 d-grid mt-2">
+                <button type="submit" className="btn btn-success">{editando ? 'Actualizar' : 'Guardar'}</button>
               </div>
             </form>
           </div>

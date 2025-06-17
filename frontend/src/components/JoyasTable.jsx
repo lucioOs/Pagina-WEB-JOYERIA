@@ -1,241 +1,207 @@
-// src/components/JoyasTable.jsx
 import React, { useState, useEffect } from 'react';
-import { FaEye, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 
 const JoyasTable = () => {
   const [joyas, setJoyas] = useState([]);
-  const [filtro, setFiltro] = useState('');
-  const [joyasFiltradas, setJoyasFiltradas] = useState([]);
-  const [nuevaJoya, setNuevaJoya] = useState({
-    nombre: '', descripcion: '', precio: '', inventario: '', tipo: '', material: ''
-  });
-  const [joyaEditando, setJoyaEditando] = useState(null);
-  const [joyaSeleccionada, setJoyaSeleccionada] = useState(null);
+  const [form, setForm] = useState({});
+  const [editando, setEditando] = useState(false);
+  const [claveEditando, setClaveEditando] = useState(null);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [tipos, setTipos] = useState([]);
   const [materiales, setMateriales] = useState([]);
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-
-  // 🔢 Paginación
+  const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
-  const joyasPorPagina = 10;
-  const indexUltima = paginaActual * joyasPorPagina;
-  const indexPrimera = indexUltima - joyasPorPagina;
-  const joyasActuales = joyasFiltradas.slice(indexPrimera, indexUltima);
-  const totalPaginas = Math.ceil(joyasFiltradas.length / joyasPorPagina);
-  const cambiarPagina = (n) => { if (n >= 1 && n <= totalPaginas) setPaginaActual(n); };
+  const porPagina = 10;
 
-  const mostrarToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type }), 3000);
-  };
-
-  const obtenerJoyas = async () => {
-    try {
-      const res = await fetch('http://localhost:3000/api/joyas');
-      const data = await res.json();
-      setJoyas(data);
-      setJoyasFiltradas(data);
-    } catch (error) {
-      console.error('Error al cargar joyas:', error);
-      mostrarToast('Error al cargar joyas', 'danger');
-    }
-  };
-
-  const obtenerTiposYMateriales = async () => {
-    const resTipos = await fetch('http://localhost:3000/api/joyas/tipos');
-    const resMateriales = await fetch('http://localhost:3000/api/joyas/materiales');
-    setTipos(await resTipos.json());
-    setMateriales(await resMateriales.json());
-  };
+  const URL = 'http://localhost:3000/api/joyas';
 
   useEffect(() => {
     obtenerJoyas();
-    obtenerTiposYMateriales();
+    fetch('http://localhost:3000/api/joyas/tipos').then(res => res.json()).then(setTipos);
+    fetch('http://localhost:3000/api/joyas/materiales').then(res => res.json()).then(setMateriales);
   }, []);
 
-  const manejarCambio = e => {
-    setNuevaJoya({ ...nuevaJoya, [e.target.name]: e.target.value });
+  const obtenerJoyas = async () => {
+    const res = await fetch(URL);
+    const data = await res.json();
+    setJoyas(data);
   };
 
-  const manejarBusqueda = e => {
-    const texto = e.target.value.toLowerCase();
-    setFiltro(texto);
-    setPaginaActual(1);
-    setJoyasFiltradas(joyas.filter(j => j.NOMBRE.toLowerCase().includes(texto)));
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const agregarJoya = async () => {
-    const metodo = joyaEditando ? 'PUT' : 'POST';
-    const url = joyaEditando
-      ? `http://localhost:3000/api/joyas/${joyaEditando.CLAVE}`
-      : 'http://localhost:3000/api/joyas';
-
-    const res = await fetch(url, {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const metodo = editando ? 'PUT' : 'POST';
+    const endpoint = editando ? `${URL}/${claveEditando}` : URL;
+    const res = await fetch(endpoint, {
       method: metodo,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(nuevaJoya),
+      body: JSON.stringify(form)
     });
 
     if (res.ok) {
-      document.getElementById('cerrarModal').click();
-      setNuevaJoya({ nombre: '', descripcion: '', precio: '', inventario: '', tipo: '', material: '' });
-      setJoyaEditando(null);
       obtenerJoyas();
-      mostrarToast(joyaEditando ? 'Joya actualizada' : 'Joya agregada');
+      setForm({});
+      setMostrarFormulario(false);
+      setEditando(false);
     } else {
-      mostrarToast('Error al guardar la joya', 'danger');
+      alert('❌ Error al guardar');
     }
   };
 
-  const eliminarJoya = async (clave) => {
-    if (window.confirm('¿Seguro que deseas eliminar esta joya?')) {
-      const res = await fetch(`http://localhost:3000/api/joyas/${clave}`, { method: 'DELETE' });
-      if (res.ok) {
-        obtenerJoyas();
-        mostrarToast('Joya eliminada', 'success');
-      } else {
-        mostrarToast('Error al eliminar la joya', 'danger');
-      }
-    }
-  };
-
-  const prepararEdicion = (joya) => {
-    setNuevaJoya({
+  const handleEditar = (joya) => {
+    setForm({
       nombre: joya.NOMBRE,
       descripcion: joya.DESCRIPCION,
       precio: joya.PRECIO,
       inventario: joya.INVENTARIO,
       tipo: joya.TIPO,
-      material: joya.MATERIAL
+      material: joya.MATERIAL,
+      foto: joya.FOTO
     });
-    setJoyaEditando(joya);
+    setClaveEditando(joya.CLAVE);
+    setEditando(true);
+    setMostrarFormulario(true);
   };
 
+  const handleEliminar = async (clave) => {
+    if (window.confirm('¿Eliminar joya?')) {
+      const res = await fetch(`${URL}/${clave}`, { method: 'DELETE' });
+      if (res.ok) obtenerJoyas();
+    }
+  };
+
+  const filtrar = joyas.filter(j =>
+  String(j.NOMBRE || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+  String(j.TIPO || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+  String(j.MATERIAL || '').toLowerCase().includes(busqueda.toLowerCase())
+);
+
+
+  const totalPaginas = Math.ceil(filtrar.length / porPagina);
+  const joyasPagina = filtrar.slice((paginaActual - 1) * porPagina, paginaActual * porPagina);
+
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Catálogo de Joyas </h2>
-
-      {toast.show && (
-        <div className={`alert alert-${toast.type} position-fixed top-0 end-0 m-3`}>{toast.message}</div>
-      )}
-
+    <div className="container position-relative">
+      <h2 className="text-center my-4">Catálogo de Joyas</h2>
       <input
         type="text"
-        placeholder="Buscar por nombre..."
+        placeholder="Buscar por nombre, tipo o material..."
         className="form-control mb-3"
-        value={filtro}
-        onChange={manejarBusqueda}
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
       />
 
-      <table className="table table-bordered table-hover shadow">
-        <thead className="table-dark text-center">
+      <table className="table table-bordered text-center align-middle">
+        <thead className="table-dark">
           <tr>
-            <th>#</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Cantidad</th><th>Total</th><th>Imagen</th>
-            <th>Ver</th><th>Editar</th><th>Eliminar</th>
+            <th>#</th><th>Nombre</th><th>Descripción</th><th>Precio</th><th>Inventario</th><th>Tipo</th><th>Material</th><th>Foto</th>
+            <th>Editar</th><th>Eliminar</th>
           </tr>
         </thead>
-        <tbody className="text-center align-middle">
-          {joyasActuales.map((joya, index) => (
-            <tr key={index}>
-              <td>{indexPrimera + index + 1}</td>
-              <td>{joya.NOMBRE}</td>
-              <td>{joya.TIPO}</td>
-              <td>${joya.PRECIO}</td>
-              <td>{joya.INVENTARIO}</td>
-              <td>${joya.PRECIO * joya.INVENTARIO}</td>
-              <td><img src={joya.FOTO} alt={joya.NOMBRE} width="90" /></td>
-              <td><button className="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalVer" onClick={() => setJoyaSeleccionada(joya)}><FaEye /></button></td>
-              <td><button className="btn btn-outline-warning" onClick={() => prepararEdicion(joya)} data-bs-toggle="modal" data-bs-target="#modalAgregar"><FaEdit /></button></td>
-              <td><button className="btn btn-outline-danger" onClick={() => eliminarJoya(joya.CLAVE)}><FaTrash /></button></td>
+        <tbody>
+          {joyasPagina.map((j, i) => (
+            <tr key={j.CLAVE}>
+              <td>{(paginaActual - 1) * porPagina + i + 1}</td>
+              <td>{j.NOMBRE}</td>
+              <td>{j.DESCRIPCION}</td>
+              <td>${j.PRECIO}</td>
+              <td>{j.INVENTARIO}</td>
+              <td>{j.TIPO}</td>
+              <td>{j.MATERIAL}</td>
+              <td>
+                {j.FOTO && <img src={j.FOTO} alt={j.NOMBRE} width="60" />}
+              </td>
+              <td><button className="btn btn-warning" onClick={() => handleEditar(j)}><FaEdit /></button></td>
+              <td><button className="btn btn-danger" onClick={() => handleEliminar(j.CLAVE)}><FaTrash /></button></td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {/* Paginación */}
-      <div className="d-flex justify-content-center mt-3">
-        <button className="btn btn-secondary mx-1" onClick={() => cambiarPagina(paginaActual - 1)} disabled={paginaActual === 1}>◀</button>
+      <ul className="pagination justify-content-center">
+        <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(1)}>⏮</button>
+        </li>
+        <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)}>◀</button>
+        </li>
         {[...Array(totalPaginas)].map((_, i) => (
-          <button
-            key={i}
-            className={`btn btn-${paginaActual === i + 1 ? 'dark' : 'light'} mx-1`}
-            onClick={() => cambiarPagina(i + 1)}
-          >
-            {i + 1}
-          </button>
+          <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+            <button className="page-link" onClick={() => setPaginaActual(i + 1)}>{i + 1}</button>
+          </li>
         ))}
-        <button className="btn btn-secondary mx-1" onClick={() => cambiarPagina(paginaActual + 1)} disabled={paginaActual === totalPaginas}>▶</button>
-      </div>
+        <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)}>▶</button>
+        </li>
+        <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(totalPaginas)}>⏭</button>
+        </li>
+      </ul>
 
-      <button className="btn btn-danger rounded-circle position-fixed bottom-0 end-0 m-5 shadow-lg"
-        data-bs-toggle="modal" data-bs-target="#modalAgregar" onClick={() => {
-          setJoyaEditando(null);
-          setNuevaJoya({ nombre: '', descripcion: '', precio: '', inventario: '', tipo: '', material: '' });
-        }}>
-        <FaPlus size={20} />
+      <button
+        title="Agregar nueva joya"
+        className="btn btn-success rounded-circle position-fixed shadow"
+        style={{ bottom: 40, right: 40 }}
+        onClick={() => {
+          setForm({});
+          setEditando(false);
+          setMostrarFormulario(true);
+        }}
+      >
+        <FaPlus />
       </button>
 
-      {/* Modal Agregar/Editar */}
-      <div className="modal fade" id="modalAgregar" tabIndex="-1">
-        <div className="modal-dialog">
+      {/* Formulario modal */}
+      {mostrarFormulario && (
+        <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">{joyaEditando ? 'Editar Joya' : 'Agregar nueva joya'}</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" id="cerrarModal"></button>
+            <div className="d-flex justify-content-between mb-2">
+              <h5>{editando ? 'Editar joya' : 'Agregar nueva joya'}</h5>
+              <button onClick={() => setMostrarFormulario(false)} className="btn"><FaTimes /></button>
             </div>
-            <div className="modal-body">
-              <label>Nombre</label>
-              <input name="nombre" onChange={manejarCambio} value={nuevaJoya.nombre} className="form-control mb-2" />
-              <label>Descripción</label>
-              <input name="descripcion" onChange={manejarCambio} value={nuevaJoya.descripcion} className="form-control mb-2" />
-              <label>Precio</label>
-              <input name="precio" type="number" onChange={manejarCambio} value={nuevaJoya.precio} className="form-control mb-2" />
-              <label>Inventario</label>
-              <input name="inventario" type="number" onChange={manejarCambio} value={nuevaJoya.inventario} className="form-control mb-2" />
-              <label>Tipo</label>
-              <select name="tipo" onChange={manejarCambio} value={nuevaJoya.tipo} className="form-control mb-2">
-                <option value="">Seleccione un tipo</option>
-                {tipos.map(t => <option key={t.CLAVE} value={t.CLAVE}>{t.NOMBRE}</option>)}
-              </select>
-              <label>Material</label>
-              <select name="material" onChange={manejarCambio} value={nuevaJoya.material} className="form-control mb-2">
-                <option value="">Seleccione un material</option>
-                {materiales.map(m => <option key={m.CLAVE} value={m.CLAVE}>{m.NOMBRE}</option>)}
-              </select>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-success" onClick={agregarJoya}>{joyaEditando ? 'Actualizar' : 'Guardar'}</button>
-            </div>
+            <form className="row g-2" onSubmit={handleSubmit}>
+              <div className="col-md-6">
+                <input name="nombre" placeholder="Nombre" value={form.nombre || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input name="descripcion" placeholder="Descripción" value={form.descripcion || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input name="precio" type="number" placeholder="Precio" value={form.precio || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input name="inventario" type="number" placeholder="Inventario" value={form.inventario || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <select name="tipo" value={form.tipo || ''} onChange={handleChange} className="form-select" required>
+                  <option value="">Seleccionar tipo</option>
+                  {tipos.map(t => (
+                    <option key={t.CLAVE} value={t.NOMBRE}>{t.NOMBRE}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <select name="material" value={form.material || ''} onChange={handleChange} className="form-select" required>
+                  <option value="">Seleccionar material</option>
+                  {materiales.map(m => (
+                    <option key={m.CLAVE} value={m.NOMBRE}>{m.NOMBRE}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-12">
+                <input name="foto" placeholder="URL de la imagen" value={form.foto || ''} onChange={handleChange} className="form-control" />
+              </div>
+              <div className="col-12 d-grid mt-2">
+                <button type="submit" className="btn btn-success">{editando ? 'Actualizar' : 'Guardar'}</button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
-
-      {/* Modal Ver */}
-      <div className="modal fade" id="modalVer" tabIndex="-1">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Detalles de la Joya</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div className="modal-body">
-              {joyaSeleccionada && (
-                <div>
-                  <strong>Nombre:</strong> {joyaSeleccionada.NOMBRE}<br />
-                  <strong>Descripción:</strong> {joyaSeleccionada.DESCRIPCION}<br />
-                  <strong>Precio:</strong> ${joyaSeleccionada.PRECIO}<br />
-                  <strong>Inventario:</strong> {joyaSeleccionada.INVENTARIO}<br />
-                  <strong>Tipo:</strong> {joyaSeleccionada.TIPO}<br />
-                  <strong>Material:</strong> {joyaSeleccionada.MATERIAL}<br />
-                  <img src={joyaSeleccionada.FOTO} alt={joyaSeleccionada.NOMBRE} className="img-fluid mt-3" />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

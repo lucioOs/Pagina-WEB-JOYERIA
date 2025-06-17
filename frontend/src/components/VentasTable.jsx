@@ -1,6 +1,7 @@
 // src/components/VentasTable.jsx
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import Swal from 'sweetalert2';
 
 const VentasTable = () => {
   const [ventas, setVentas] = useState([]);
@@ -58,7 +59,7 @@ const VentasTable = () => {
       setMostrarFormulario(false);
       setEditando(false);
     } else {
-      alert('❌ Error al guardar');
+      Swal.fire('Error', 'No se pudo guardar la venta', 'error');
     }
   };
 
@@ -78,14 +79,30 @@ const VentasTable = () => {
   };
 
   const handleEliminar = async (clave) => {
-    if (window.confirm('¿Eliminar venta?')) {
+    const confirm = await Swal.fire({
+      title: '¿Eliminar venta?',
+      text: "No podrás deshacer esta acción",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar'
+    });
+
+    if (confirm.isConfirmed) {
       const res = await fetch(`${URL}/${clave}`, { method: 'DELETE' });
-      if (res.ok) obtenerVentas();
+      if (res.ok) {
+        obtenerVentas();
+        Swal.fire('Eliminado', 'La venta ha sido eliminada', 'success');
+      }
     }
   };
 
   const filtrar = ventas.filter(v =>
-    Object.values(v).some(val => String(val).toLowerCase().includes(busqueda.toLowerCase()))
+    v.CLIENTE?.toLowerCase().includes(busqueda.toLowerCase()) ||
+    v.EMPLEADO?.toLowerCase().includes(busqueda.toLowerCase()) ||
+    v.SUCURSAL?.toLowerCase().includes(busqueda.toLowerCase()) ||
+    v.CLAVE?.toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const totalPaginas = Math.ceil(filtrar.length / porPagina);
@@ -96,7 +113,7 @@ const VentasTable = () => {
       <h2 className="text-center my-4">Catálogo de Ventas</h2>
       <input
         type="text"
-        placeholder="Buscar..."
+        placeholder="Buscar por cliente, empleado o sucursal..."
         className="form-control mb-3"
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
@@ -114,7 +131,7 @@ const VentasTable = () => {
             <tr key={v.CLAVE}>
               <td>{(paginaActual - 1) * porPagina + i + 1}</td>
               <td>{v.CLAVE}</td>
-              <td>{new Date(v.FECHA).toLocaleDateString('es-MX')}</td>
+              <td>{new Date(v.FECHA).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
               <td>{v.CLIENTE}</td>
               <td>{v.EMPLEADO}</td>
               <td>{v.SUCURSAL}</td>
@@ -125,8 +142,11 @@ const VentasTable = () => {
         </tbody>
       </table>
 
-      {/* Paginación */}
+      {/* Paginación mejorada */}
       <ul className="pagination justify-content-center">
+        <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(1)}>⏮</button>
+        </li>
         <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
           <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)}>◀</button>
         </li>
@@ -138,10 +158,14 @@ const VentasTable = () => {
         <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
           <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)}>▶</button>
         </li>
+        <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(totalPaginas)}>⏭</button>
+        </li>
       </ul>
 
       <button
-        className="btn btn-success rounded-circle position-fixed"
+        title="Agregar nueva venta"
+        className="btn btn-success rounded-circle position-fixed shadow"
         style={{ bottom: 40, right: 40 }}
         onClick={() => {
           setForm({});
@@ -189,7 +213,13 @@ const VentasTable = () => {
                 </select>
               </div>
               <div className="col-12 d-grid mt-2">
-                <button type="submit" className="btn btn-success">{editando ? 'Actualizar' : 'Guardar'}</button>
+                <button
+                  type="submit"
+                  className="btn btn-success"
+                  disabled={!form.FECHA || !form.CLAVE_CLIENTE || !form.CLAVE_EMPLEADO || !form.CLAVE_SUCURSAL}
+                >
+                  {editando ? 'Actualizar' : 'Guardar'}
+                </button>
               </div>
             </form>
           </div>

@@ -1,103 +1,54 @@
-// src/components/ClientesTable.jsx
 import React, { useState, useEffect } from 'react';
-import { FaEye, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 
 const ClientesTable = () => {
   const [clientes, setClientes] = useState([]);
-  const [filtro, setFiltro] = useState('');
-  const [clientesFiltrados, setClientesFiltrados] = useState([]);
-  const [nuevoCliente, setNuevoCliente] = useState({
-    nombre: '', apellido_pat: '', apellido_mat: '',
-    fecha_nac: '', fecha_reg: '', telefono: '',
-    correo: '', foto: '', clave_direccion: ''
-  });
-  const [clienteEditando, setClienteEditando] = useState(null);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-
+  const [form, setForm] = useState({});
+  const [editando, setEditando] = useState(false);
+  const [claveEditando, setClaveEditando] = useState(null);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
-  const clientesPorPagina = 10;
-  const indexUltima = paginaActual * clientesPorPagina;
-  const indexPrimera = indexUltima - clientesPorPagina;
-  const clientesActuales = clientesFiltrados.slice(indexPrimera, indexUltima);
-  const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
-  const cambiarPagina = (n) => { if (n >= 1 && n <= totalPaginas) setPaginaActual(n); };
+  const porPagina = 10;
 
-  const mostrarToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type }), 3000);
-  };
-
-  const obtenerClientes = async () => {
-    try {
-      const res = await fetch('http://localhost:3000/api/clientes');
-      const data = await res.json();
-      setClientes(data);
-      setClientesFiltrados(data);
-    } catch (error) {
-      console.error('Error al cargar clientes:', error);
-      mostrarToast('Error al cargar clientes', 'danger');
-    }
-  };
+  const URL = 'http://localhost:3000/api/clientes';
 
   useEffect(() => {
     obtenerClientes();
   }, []);
 
-  const manejarCambio = e => {
-    setNuevoCliente({ ...nuevoCliente, [e.target.name]: e.target.value });
+  const obtenerClientes = async () => {
+    const res = await fetch(URL);
+    const data = await res.json();
+    setClientes(data);
   };
 
-  const manejarBusqueda = e => {
-    const texto = e.target.value.toLowerCase();
-    setFiltro(texto);
-    setPaginaActual(1);
-    setClientesFiltrados(clientes.filter(c => c.NOMBRE.toLowerCase().includes(texto)));
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const guardarCliente = async () => {
-    const metodo = clienteEditando ? 'PUT' : 'POST';
-    const url = clienteEditando
-      ? `http://localhost:3000/api/clientes/${clienteEditando.CLAVE}`
-      : 'http://localhost:3000/api/clientes';
-
-    const res = await fetch(url, {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const metodo = editando ? 'PUT' : 'POST';
+    const endpoint = editando ? `${URL}/${claveEditando}` : URL;
+    const res = await fetch(endpoint, {
       method: metodo,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(nuevoCliente),
+      body: JSON.stringify(form)
     });
 
     if (res.ok) {
-      document.getElementById('cerrarModal').click();
-      setNuevoCliente({
-        nombre: '', apellido_pat: '', apellido_mat: '',
-        fecha_nac: '', fecha_reg: '', telefono: '',
-        correo: '', foto: '', clave_direccion: ''
-      });
-      setClienteEditando(null);
       obtenerClientes();
-      mostrarToast(clienteEditando ? 'Cliente actualizado' : 'Cliente agregado');
+      setForm({});
+      setMostrarFormulario(false);
+      setEditando(false);
     } else {
-      mostrarToast('Error al guardar cliente', 'danger');
+      alert('❌ Error al guardar');
     }
   };
 
-  const eliminarCliente = async (clave) => {
-    if (window.confirm('¿Eliminar cliente?')) {
-      const res = await fetch(`http://localhost:3000/api/clientes/${clave}`, { method: 'DELETE' });
-      if (res.ok) {
-        obtenerClientes();
-        mostrarToast('Cliente eliminado');
-      } else {
-        mostrarToast('Error al eliminar cliente', 'danger');
-      }
-    }
-  };
-
-  const prepararEdicion = (cliente) => {
-    setNuevoCliente({
+  const handleEditar = (cliente) => {
+    setForm({
       nombre: cliente.NOMBRE,
       apellido_pat: cliente.APELLIDO_PAT,
       apellido_mat: cliente.APELLIDO_MAT,
@@ -108,123 +59,138 @@ const ClientesTable = () => {
       foto: cliente.FOTO,
       clave_direccion: cliente.CLAVE_DIRECCION
     });
-    setClienteEditando(cliente);
+    setClaveEditando(cliente.CLAVE);
+    setEditando(true);
+    setMostrarFormulario(true);
   };
 
+  const handleEliminar = async (clave) => {
+    if (window.confirm('¿Eliminar cliente?')) {
+      const res = await fetch(`${URL}/${clave}`, { method: 'DELETE' });
+      if (res.ok) obtenerClientes();
+    }
+  };
+
+  const filtrar = clientes.filter(c =>
+    (c.NOMBRE || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    (c.APELLIDO_PAT || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    (c.APELLIDO_MAT || '').toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  const totalPaginas = Math.ceil(filtrar.length / porPagina);
+  const clientesPagina = filtrar.slice((paginaActual - 1) * porPagina, paginaActual * porPagina);
+
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Catálogo de Clientes </h2>
-
-      {toast.show && (
-        <div className={`alert alert-${toast.type} position-fixed top-0 end-0 m-3`}>{toast.message}</div>
-      )}
-
+    <div className="container position-relative">
+      <h2 className="text-center my-4">Catálogo de Clientes</h2>
       <input
         type="text"
-        placeholder="Buscar por nombre..."
+        placeholder="Buscar por nombre o apellido..."
         className="form-control mb-3"
-        value={filtro}
-        onChange={manejarBusqueda}
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
       />
 
-      <table className="table table-bordered table-hover shadow">
-        <thead className="table-dark text-center">
+      <table className="table table-bordered text-center align-middle">
+        <thead className="table-dark">
           <tr>
-            <th>#</th><th>Nombre</th><th>Apellido</th><th>Teléfono</th><th>Correo</th>
-            <th>Ver</th><th>Editar</th><th>Eliminar</th>
+            <th>#</th><th>Nombre</th><th>Apellidos</th><th>Teléfono</th><th>Correo</th><th>Foto</th>
+            <th>Editar</th><th>Eliminar</th>
           </tr>
         </thead>
-        <tbody className="text-center align-middle">
-          {clientesActuales.map((cliente, index) => (
-            <tr key={index}>
-              <td>{indexPrimera + index + 1}</td>
-              <td>{cliente.NOMBRE}</td>
-              <td>{cliente.APELLIDO_PAT} {cliente.APELLIDO_MAT}</td>
-              <td>{cliente.TELEFONO}</td>
-              <td>{cliente.CORREO}</td>
-              <td><button className="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalVer" onClick={() => setClienteSeleccionado(cliente)}><FaEye /></button></td>
-              <td><button className="btn btn-outline-warning" onClick={() => prepararEdicion(cliente)} data-bs-toggle="modal" data-bs-target="#modalAgregar"><FaEdit /></button></td>
-              <td><button className="btn btn-outline-danger" onClick={() => eliminarCliente(cliente.CLAVE)}><FaTrash /></button></td>
+        <tbody>
+          {clientesPagina.map((c, i) => (
+            <tr key={c.CLAVE}>
+              <td>{(paginaActual - 1) * porPagina + i + 1}</td>
+              <td>{c.NOMBRE}</td>
+              <td>{c.APELLIDO_PAT} {c.APELLIDO_MAT}</td>
+              <td>{c.TELEFONO}</td>
+              <td>{c.CORREO}</td>
+              <td>{c.FOTO && <img src={c.FOTO} alt="foto" width="50" />}</td>
+              <td><button className="btn btn-warning" onClick={() => handleEditar(c)}><FaEdit /></button></td>
+              <td><button className="btn btn-danger" onClick={() => handleEliminar(c.CLAVE)}><FaTrash /></button></td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="d-flex justify-content-center mt-3">
-        <button className="btn btn-secondary mx-1" onClick={() => cambiarPagina(paginaActual - 1)} disabled={paginaActual === 1}>◀</button>
+      {/* Paginación */}
+      <ul className="pagination justify-content-center">
+        <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(1)}>⏮</button>
+        </li>
+        <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)}>◀</button>
+        </li>
         {[...Array(totalPaginas)].map((_, i) => (
-          <button
-            key={i}
-            className={`btn btn-${paginaActual === i + 1 ? 'dark' : 'light'} mx-1`}
-            onClick={() => cambiarPagina(i + 1)}
-          >
-            {i + 1}
-          </button>
+          <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+            <button className="page-link" onClick={() => setPaginaActual(i + 1)}>{i + 1}</button>
+          </li>
         ))}
-        <button className="btn btn-secondary mx-1" onClick={() => cambiarPagina(paginaActual + 1)} disabled={paginaActual === totalPaginas}>▶</button>
-      </div>
+        <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)}>▶</button>
+        </li>
+        <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(totalPaginas)}>⏭</button>
+        </li>
+      </ul>
 
-      <button className="btn btn-danger rounded-circle position-fixed bottom-0 end-0 m-5 shadow-lg"
-        data-bs-toggle="modal" data-bs-target="#modalAgregar" onClick={() => {
-          setClienteEditando(null);
-          setNuevoCliente({
-            nombre: '', apellido_pat: '', apellido_mat: '',
-            fecha_nac: '', fecha_reg: '', telefono: '',
-            correo: '', foto: '', clave_direccion: ''
-          });
-        }}>
-        <FaPlus size={20} />
+      <button
+        title="Agregar nuevo cliente"
+        className="btn btn-success rounded-circle position-fixed shadow"
+        style={{ bottom: 40, right: 40 }}
+        onClick={() => {
+          setForm({});
+          setEditando(false);
+          setMostrarFormulario(true);
+        }}
+      >
+        <FaPlus />
       </button>
 
-      {/* Modal Agregar/Editar */}
-      <div className="modal fade" id="modalAgregar" tabIndex="-1">
-        <div className="modal-dialog">
+      {/* Formulario modal */}
+      {mostrarFormulario && (
+        <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">{clienteEditando ? 'Editar Cliente' : 'Agregar Cliente'}</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" id="cerrarModal"></button>
+            <div className="d-flex justify-content-between mb-2">
+              <h5>{editando ? 'Editar cliente' : 'Agregar nuevo cliente'}</h5>
+              <button onClick={() => setMostrarFormulario(false)} className="btn"><FaTimes /></button>
             </div>
-            <div className="modal-body">
-              <input name="nombre" placeholder="Nombre" className="form-control mb-2" value={nuevoCliente.nombre} onChange={manejarCambio} />
-              <input name="apellido_pat" placeholder="Apellido Paterno" className="form-control mb-2" value={nuevoCliente.apellido_pat} onChange={manejarCambio} />
-              <input name="apellido_mat" placeholder="Apellido Materno" className="form-control mb-2" value={nuevoCliente.apellido_mat} onChange={manejarCambio} />
-              <input name="fecha_nac" type="date" className="form-control mb-2" value={nuevoCliente.fecha_nac} onChange={manejarCambio} />
-              <input name="fecha_reg" type="date" className="form-control mb-2" value={nuevoCliente.fecha_reg} onChange={manejarCambio} />
-              <input name="telefono" placeholder="Teléfono" className="form-control mb-2" value={nuevoCliente.telefono} onChange={manejarCambio} />
-              <input name="correo" placeholder="Correo" className="form-control mb-2" value={nuevoCliente.correo} onChange={manejarCambio} />
-              <input name="foto" placeholder="URL de foto" className="form-control mb-2" value={nuevoCliente.foto} onChange={manejarCambio} />
-              <input name="clave_direccion" placeholder="Clave Dirección" className="form-control mb-2" value={nuevoCliente.clave_direccion} onChange={manejarCambio} />
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-success" onClick={guardarCliente}>{clienteEditando ? 'Actualizar' : 'Guardar'}</button>
-            </div>
+            <form className="row g-2" onSubmit={handleSubmit}>
+              <div className="col-md-6">
+                <input name="nombre" placeholder="Nombre" value={form.nombre || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input name="apellido_pat" placeholder="Apellido Paterno" value={form.apellido_pat || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input name="apellido_mat" placeholder="Apellido Materno" value={form.apellido_mat || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input type="date" name="fecha_nac" value={form.fecha_nac || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input type="date" name="fecha_reg" value={form.fecha_reg || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input name="telefono" placeholder="Teléfono" value={form.telefono || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input name="correo" placeholder="Correo" value={form.correo || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-md-6">
+                <input name="foto" placeholder="URL de la foto" value={form.foto || ''} onChange={handleChange} className="form-control" />
+              </div>
+              <div className="col-12">
+                <input name="clave_direccion" placeholder="Clave de Dirección" value={form.clave_direccion || ''} onChange={handleChange} className="form-control" required />
+              </div>
+              <div className="col-12 d-grid mt-2">
+                <button type="submit" className="btn btn-success">{editando ? 'Actualizar' : 'Guardar'}</button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
-
-      {/* Modal Ver */}
-      <div className="modal fade" id="modalVer" tabIndex="-1">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Detalles del Cliente</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div className="modal-body">
-              {clienteSeleccionado && (
-                <div>
-                  <strong>Nombre:</strong> {clienteSeleccionado.NOMBRE} {clienteSeleccionado.APELLIDO_PAT} {clienteSeleccionado.APELLIDO_MAT}<br />
-                  <strong>Fecha Nacimiento:</strong> {clienteSeleccionado.FECHA_NAC}<br />
-                  <strong>Fecha Registro:</strong> {clienteSeleccionado.FECHA_REG}<br />
-                  <strong>Teléfono:</strong> {clienteSeleccionado.TELEFONO}<br />
-                  <strong>Correo:</strong> {clienteSeleccionado.CORREO}<br />
-                  <img src={clienteSeleccionado.FOTO} alt="foto" className="img-fluid mt-3" />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
