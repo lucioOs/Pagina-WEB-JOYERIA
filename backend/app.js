@@ -5,6 +5,7 @@ const joyasRoutes = require('./routes/joyas.routes');
 const clientesRoutes = require('./routes/clientes.routes'); 
 const empleadosRoutes = require('./routes/empleados.routes');
 const rolesRoutes = require('./routes/roles.routes');
+const ventasRoutes = require('./routes/ventas.routes');
 const app = express();
 const puerto = process.env.PUERTO || 3000;
 
@@ -16,6 +17,8 @@ app.use('/api/joyas', joyasRoutes);
 app.use('/api/clientes', clientesRoutes); 
 app.use('/api/empleados', empleadosRoutes);
 app.use('/api/roles', rolesRoutes);
+app.use('/api/ventas', ventasRoutes);
+
 app.get('/', (req, res) => {
   res.send('API REST Joyería funcionando');
 

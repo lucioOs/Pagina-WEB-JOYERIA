@@ -11,7 +11,7 @@ const Layout = () => {
 
   const secciones = [
     {
-      titulo: 'Inventario',
+      titulo: 'Catalogo',
       items: [
         { path: '/joyas', label: 'Joyas', icon: <FaGem /> },
         { path: '/tipos', label: 'Tipos de joya', icon: <FaGem /> },
@@ -22,6 +22,7 @@ const Layout = () => {
       titulo: 'Clientes',
       items: [
         { path: '/clientes', label: 'Clientes', icon: <FaUsers /> },
+        { path: '/direccion_clientes', label: 'direccion_Clientes', icon: <FaUsers /> },
       ]
     },
     {

@@ -4,10 +4,9 @@ import Layout from './components/Layout';
 import JoyasTable from './components/JoyasTable';
 import ClientesTable from './components/ClientesTable';
 import EmpleadosTable from './components/EmpleadosTable';
+import VentasTable from './components/VentasTable';
 import Login from './components/Login';
 
-
-const VentasTable = () => <h2>Ventas (en construcción)</h2>;
 
 const Protegido = ({ children }) => {
   const autenticado = localStorage.getItem('autenticado') === 'true';
@@ -23,7 +22,7 @@ function App() {
           <Route path="joyas" element={<JoyasTable />} />
           <Route path="clientes" element={<ClientesTable />} />
           <Route path="/empleados" element={<EmpleadosTable />} />
-          <Route path="ventas" element={<VentasTable />} />
+          <Route path="/ventas" element={<VentasTable />} />
         </Route>
       </Routes>
     </BrowserRouter>
