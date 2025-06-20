@@ -20,7 +20,15 @@ const JoyasTable = () => {
     obtenerJoyas();
     fetch(`${URL}/tipos`).then(res => res.json()).then(setTipos);
     fetch(`${URL}/materiales`).then(res => res.json()).then(setMateriales);
-    fetch(`http://localhost:3000/api/diseniadores`).then(res => res.json()).then(setDiseniadores);
+    fetch(`http://localhost:3000/api/diseniadores`)
+      .then(res => res.json())
+      .then(data => {
+        const formateados = data.map(d => ({
+          ...d,
+          NOMBRE_COMPLETO: `${d.NOMBRE} ${d.AP_PAT}`.trim()
+        }));
+        setDiseniadores(formateados);
+      });
   }, []);
 
   const obtenerJoyas = async () => {
@@ -57,10 +65,7 @@ const JoyasTable = () => {
         body: JSON.stringify(joyaData)
       });
 
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || 'Error al guardar');
-      }
+      if (!res.ok) throw new Error(await res.text());
 
       obtenerJoyas();
       setForm({});
@@ -74,7 +79,8 @@ const JoyasTable = () => {
   const handleEditar = (joya) => {
     const tipoNombre = tipos.find(t => t.CLAVE === joya.TIPO)?.NOMBRE || '';
     const materialNombre = materiales.find(m => m.CLAVE === joya.MATERIAL)?.NOMBRE || '';
-    const diseniadorNombre = diseniadores.find(d => d.CLAVE === joya.DISENIADOR_CLAVE)?.NOMBRE_COMPLETO || '';
+    const diseniador = diseniadores.find(d => d.CLAVE === joya.DISENIADOR_CLAVE);
+    const diseniadorNombre = diseniador ? diseniador.NOMBRE_COMPLETO : '';
 
     setForm({
       nombre: joya.NOMBRE,
@@ -97,10 +103,7 @@ const JoyasTable = () => {
     try {
       const res = await fetch(`${URL}/${clave}`, { method: "DELETE" });
 
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || "Error al eliminar");
-      }
+      if (!res.ok) throw new Error(await res.text());
 
       alert("✅ Joya eliminada correctamente");
       obtenerJoyas();
@@ -155,6 +158,7 @@ const JoyasTable = () => {
         </tbody>
       </table>
 
+      {/* Paginación */}
       <ul className="pagination justify-content-center">
         <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
           <button className="page-link" onClick={() => setPaginaActual(1)}>⏮</button>
@@ -175,6 +179,7 @@ const JoyasTable = () => {
         </li>
       </ul>
 
+      {/* Botón flotante */}
       <button
         className="btn btn-success rounded-circle position-fixed shadow"
         style={{ bottom: 40, right: 40 }}
@@ -188,6 +193,7 @@ const JoyasTable = () => {
         <FaPlus />
       </button>
 
+      {/* Formulario */}
       {mostrarFormulario && (
         <div className="modal-overlay">
           <div className="modal-content">

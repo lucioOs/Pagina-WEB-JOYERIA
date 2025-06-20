@@ -1,49 +1,124 @@
-import React from "react";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const DiseniadoresTable = () => {
-  const diseniadores = [
-    { clave: "DIS001", nombre: "Ana Ruiz", especialidad: "Minimalista" },
-    { clave: "DIS002", nombre: "Carlos Mendoza", especialidad: "Clásico" },
-    { clave: "DIS003", nombre: "Lucía Ortega", especialidad: "Moderno" },
-    { clave: "DIS004", nombre: "Roberto Salas", especialidad: "Vintage" },
-  ];
+  const [diseniadores, setDiseniadores] = useState([]);
+  const [busqueda, setBusqueda] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [apPat, setApPat] = useState('');
+  const [editando, setEditando] = useState(null);
+
+  // Paginación
+  const itemsPorPagina = 10;
+  const [paginaActual, setPaginaActual] = useState(1);
+
+  const obtenerDiseniadores = async () => {
+    try {
+      const res = await axios.get('http://localhost:3000/api/diseniadores');
+      setDiseniadores(res.data);
+    } catch (err) {
+      console.error('Error al obtener diseñadores:', err);
+    }
+  };
+
+  useEffect(() => {
+    obtenerDiseniadores();
+  }, []);
+
+  const handleAgregar = async () => {
+    if (!nombre.trim()) return alert('El nombre es obligatorio');
+    try {
+      await axios.post('http://localhost:3000/api/diseniadores', {
+        NOMBRE: nombre.trim(),
+        AP_PAT: apPat.trim()
+      });
+      setNombre('');
+      setApPat('');
+      obtenerDiseniadores();
+    } catch (err) {
+      console.error('Error al agregar diseñador:', err);
+    }
+  };
+
+  const handleEditar = (diseniador) => {
+    setEditando(diseniador.CLAVE);
+    setNombre(diseniador.NOMBRE);
+    setApPat(diseniador.AP_PAT);
+  };
+
+  const handleActualizar = async () => {
+    try {
+      await axios.put(`http://localhost:3000/api/diseniadores/${editando}`, {
+        NOMBRE: nombre.trim(),
+        AP_PAT: apPat.trim()
+      });
+      setEditando(null);
+      setNombre('');
+      setApPat('');
+      obtenerDiseniadores();
+    } catch (err) {
+      console.error('Error al actualizar diseñador:', err);
+    }
+  };
+
+  const handleEliminar = async (clave) => {
+    if (window.confirm('¿Estás seguro de eliminar este diseñador?')) {
+      try {
+        await axios.delete(`http://localhost:3000/api/diseniadores/${clave}`);
+        obtenerDiseniadores();
+      } catch (err) {
+        console.error('Error al eliminar diseñador:', err);
+      }
+    }
+  };
+
+  // Filtrar y paginar
+  const filtrados = diseniadores.filter(d =>
+    d.NOMBRE.toLowerCase().includes(busqueda.toLowerCase()) ||
+    d.AP_PAT?.toLowerCase().includes(busqueda.toLowerCase())
+  );
+  const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
+  const indiceInicial = (paginaActual - 1) * itemsPorPagina;
+  const currentItems = filtrados.slice(indiceInicial, indiceInicial + itemsPorPagina);
 
   return (
     <div className="container mt-4">
-      <h2 className="text-center mb-4">Diseñadores</h2>
-
       <input
         type="text"
-        placeholder="Buscar por nombre o especialidad..."
         className="form-control mb-3"
+        placeholder="Buscar por nombre o apellido..."
+        value={busqueda}
+        onChange={(e) => {
+          setBusqueda(e.target.value);
+          setPaginaActual(1);
+        }}
       />
 
       <table className="table table-bordered table-hover text-center">
         <thead className="table-dark">
           <tr>
             <th>#</th>
-            <th>Clave</th>
             <th>Nombre</th>
-            <th>Especialidad</th>
+            <th>Apellido</th>
             <th>Editar</th>
             <th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
-          {diseniadores.map((dis, index) => (
-            <tr key={dis.clave}>
-              <td>{index + 1}</td>
-              <td>{dis.clave}</td>
-              <td>{dis.nombre}</td>
-              <td>{dis.especialidad}</td>
+          {currentItems.map((d, index) => (
+            <tr key={d.CLAVE}>
+              <td>{indiceInicial + index + 1}</td>
+              <td>{d.NOMBRE}</td>
+              <td>{d.AP_PAT}</td>
               <td>
-                <button className="btn btn-warning btn-sm">
-                  <i className="fas fa-edit"></i>
+                <button className="btn btn-warning btn-sm" onClick={() => handleEditar(d)}>
+                  <FaEdit />
                 </button>
               </td>
               <td>
-                <button className="btn btn-danger btn-sm">
-                  <i className="fas fa-trash-alt"></i>
+                <button className="btn btn-danger btn-sm" onClick={() => handleEliminar(d.CLAVE)}>
+                  <FaTrash />
                 </button>
               </td>
             </tr>
@@ -51,37 +126,52 @@ const DiseniadoresTable = () => {
         </tbody>
       </table>
 
-      <div className="d-flex justify-content-center">
+      {/* Paginación */}
+      <div className="d-flex justify-content-center mb-3">
         <nav>
           <ul className="pagination">
-            <li className="page-item disabled">
-              <button className="page-link">«</button>
+            <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)}>«</button>
             </li>
-            <li className="page-item active">
-              <button className="page-link">1</button>
-            </li>
-            <li className="page-item">
-              <button className="page-link">2</button>
-            </li>
-            <li className="page-item">
-              <button className="page-link">»</button>
+            {Array.from({ length: totalPaginas }, (_, i) => (
+              <li key={i} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+                <button className="page-link" onClick={() => setPaginaActual(i + 1)}>{i + 1}</button>
+              </li>
+            ))}
+            <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)}>»</button>
             </li>
           </ul>
         </nav>
       </div>
 
-      <button
-        className="btn btn-success rounded-circle"
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
-          width: "50px",
-          height: "50px",
-        }}
-      >
-        <i className="fas fa-plus"></i>
-      </button>
+      {/* Formulario */}
+      <div className="card p-3">
+        <h5 className="mb-3">{editando ? 'Editar Diseñador' : 'Agregar Diseñador'}</h5>
+        <div className="row">
+          <div className="col-md-6 mb-2">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Nombre"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+            />
+          </div>
+          <div className="col-md-6 mb-2">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Apellido Paterno"
+              value={apPat}
+              onChange={(e) => setApPat(e.target.value)}
+            />
+          </div>
+        </div>
+        <button className="btn btn-success w-100" onClick={editando ? handleActualizar : handleAgregar}>
+          {editando ? 'Actualizar' : 'Agregar'}
+        </button>
+      </div>
     </div>
   );
 };

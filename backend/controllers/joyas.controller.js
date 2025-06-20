@@ -1,12 +1,19 @@
 const { oracledb } = require('../config/db');
 
 // Obtener todas las joyas
+// Obtener todas las joyas con nombre de diseñador
 const getJoyas = async (req, res) => {
   let conexion;
   try {
     conexion = await oracledb.getConnection();
     const result = await conexion.execute(
-      `SELECT * FROM JOYA`,
+      `SELECT 
+         j.CLAVE, j.NOMBRE, j.DESCRIPCION, j.TIPO, j.MATERIAL, 
+         j.PRECIO, j.INVENTARIO, j.FOTO, j.DISENIADOR_CLAVE,
+         d.NOMBRE || ' ' || d.AP_PAT AS NOMBRE_COMPLETO
+       FROM JOYA j
+       LEFT JOIN DISENIADOR d ON j.DISENIADOR_CLAVE = d.CLAVE
+       ORDER BY j.CLAVE`,
       [],
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
@@ -18,6 +25,8 @@ const getJoyas = async (req, res) => {
     if (conexion) await conexion.close();
   }
 };
+
+
 
 // Obtener una joya por clave
 const getJoyaPorClave = async (req, res) => {
