@@ -1,36 +1,20 @@
+// src/components/DetallePedidoTable.jsx
 import React from "react";
 
-const DireccionSucursalTable = () => {
-  const direcciones = [
-    {
-      clave: "DS001",
-      sucursal: "Joyería Centro",
-      calle: "Av. Reforma",
-      numero: "101",
-      colonia: "Centro",
-      cp: "06000",
-      ciudad: "CDMX",
-      estado: "Ciudad de México",
-    },
-    {
-      clave: "DS002",
-      sucursal: "Joyería Sur",
-      calle: "Calle Juárez",
-      numero: "205",
-      colonia: "Del Valle",
-      cp: "50120",
-      ciudad: "Toluca",
-      estado: "Estado de México",
-    },
+const DetallePedidoTable = () => {
+  const detalles = [
+    { clave: "DP001", pedido: "P001", joya: "J001", cantidad: 2 },
+    { clave: "DP002", pedido: "P001", joya: "J005", cantidad: 1 },
+    { clave: "DP003", pedido: "P002", joya: "J003", cantidad: 3 },
   ];
 
   return (
     <div className="container mt-4">
-      <h2 className="text-center mb-4">Direcciones de Sucursales</h2>
+      <h2 className="text-center mb-4">Detalle de Pedidos</h2>
 
       <input
         type="text"
-        placeholder="Buscar por colonia, ciudad o CP..."
+        placeholder="Buscar por pedido o joya..."
         className="form-control mb-3"
       />
 
@@ -39,29 +23,21 @@ const DireccionSucursalTable = () => {
           <tr>
             <th>#</th>
             <th>Clave</th>
-            <th>Sucursal</th>
-            <th>Calle</th>
-            <th>Número</th>
-            <th>Colonia</th>
-            <th>CP</th>
-            <th>Ciudad</th>
-            <th>Estado</th>
+            <th>Pedido</th>
+            <th>Joya</th>
+            <th>Cantidad</th>
             <th>Editar</th>
             <th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
-          {direcciones.map((dir, index) => (
-            <tr key={dir.clave}>
+          {detalles.map((d, index) => (
+            <tr key={d.clave}>
               <td>{index + 1}</td>
-              <td>{dir.clave}</td>
-              <td>{dir.sucursal}</td>
-              <td>{dir.calle}</td>
-              <td>{dir.numero}</td>
-              <td>{dir.colonia}</td>
-              <td>{dir.cp}</td>
-              <td>{dir.ciudad}</td>
-              <td>{dir.estado}</td>
+              <td>{d.clave}</td>
+              <td>{d.pedido}</td>
+              <td>{d.joya}</td>
+              <td>{d.cantidad}</td>
               <td>
                 <button className="btn btn-warning btn-sm">
                   <i className="fas fa-edit"></i>
@@ -112,4 +88,4 @@ const DireccionSucursalTable = () => {
   );
 };
 
-export default DireccionSucursalTable;
+export default DetallePedidoTable;

@@ -1,4 +1,3 @@
-// src/components/VentasTable.jsx
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 import Swal from 'sweetalert2';
@@ -12,6 +11,8 @@ const VentasTable = () => {
   const [clientes, setClientes] = useState([]);
   const [empleados, setEmpleados] = useState([]);
   const [sucursales, setSucursales] = useState([]);
+  const [metodosPago, setMetodosPago] = useState([]);
+  const [promociones, setPromociones] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const porPagina = 10;
@@ -23,16 +24,18 @@ const VentasTable = () => {
     fetch('http://localhost:3000/api/clientes').then(res => res.json()).then(setClientes);
     fetch('http://localhost:3000/api/empleados').then(res => res.json()).then(setEmpleados);
     fetch('http://localhost:3000/api/sucursales').then(res => res.json()).then(setSucursales);
+    fetch('http://localhost:3000/api/metodospago').then(res => res.json()).then(setMetodosPago);
+    fetch('http://localhost:3000/api/promociones').then(res => res.json()).then(setPromociones);
   }, []);
 
   const obtenerVentas = async () => {
     const res = await fetch(URL);
     const data = await res.json();
-    setVentas(data);
+    setVentas(Array.isArray(data) ? data : []);
   };
 
   const generarClave = () => {
-    const claves = ventas.map(v => parseInt(v.CLAVE.replace('V', ''))).filter(n => !isNaN(n));
+    const claves = ventas.map(v => parseInt(v.CLAVE?.replace('V', ''))).filter(n => !isNaN(n));
     const siguiente = Math.max(...claves, 0) + 1;
     return 'V' + String(siguiente).padStart(3, '0');
   };
@@ -67,12 +70,18 @@ const VentasTable = () => {
     const cliente = clientes.find(c => `${c.NOMBRE} ${c.APELLIDO_PAT}` === venta.CLIENTE);
     const empleado = empleados.find(e => `${e.NOMBRE} ${e.APELLIDO_PAT}` === venta.EMPLEADO);
     const sucursal = sucursales.find(s => s.NOMBRE === venta.SUCURSAL);
+    const metodo = metodosPago.find(m => m.NOMBRE === venta.METODO_PAGO);
+    const promo = promociones.find(p => p.DESCUENTO === venta.PROMOCION);
+
     setForm({
       FECHA: venta.FECHA.split('T')[0],
       CLAVE_CLIENTE: cliente?.CLAVE || '',
       CLAVE_EMPLEADO: empleado?.CLAVE || '',
-      CLAVE_SUCURSAL: sucursal?.CLAVE || ''
+      CLAVE_SUCURSAL: sucursal?.CLAVE || '',
+      CLAVE_METODO_PAGO: metodo?.CLAVE || '',
+      CLAVE_PROMOCION: promo?.CLAVE || ''
     });
+
     setClaveEditando(venta.CLAVE);
     setEditando(true);
     setMostrarFormulario(true);
@@ -102,6 +111,7 @@ const VentasTable = () => {
     v.CLIENTE?.toLowerCase().includes(busqueda.toLowerCase()) ||
     v.EMPLEADO?.toLowerCase().includes(busqueda.toLowerCase()) ||
     v.SUCURSAL?.toLowerCase().includes(busqueda.toLowerCase()) ||
+    v.METODO_PAGO?.toLowerCase().includes(busqueda.toLowerCase()) ||
     v.CLAVE?.toLowerCase().includes(busqueda.toLowerCase())
   );
 
@@ -113,7 +123,7 @@ const VentasTable = () => {
       <h2 className="text-center my-4">Catálogo de Ventas</h2>
       <input
         type="text"
-        placeholder="Buscar por cliente, empleado o sucursal..."
+        placeholder="Buscar por cliente, sucursal, método o promoción..."
         className="form-control mb-3"
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
@@ -122,8 +132,7 @@ const VentasTable = () => {
       <table className="table table-bordered text-center">
         <thead className="table-dark">
           <tr>
-            <th>#</th><th>CLAVE</th><th>FECHA</th><th>CLIENTE</th><th>EMPLEADO</th><th>SUCURSAL</th>
-            <th>Editar</th><th>Eliminar</th>
+            <th>#</th><th>CLAVE</th><th>FECHA</th><th>CLIENTE</th><th>EMPLEADO</th><th>SUCURSAL</th><th>MÉTODO</th><th>PROMOCIÓN</th><th>Editar</th><th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
@@ -131,10 +140,12 @@ const VentasTable = () => {
             <tr key={v.CLAVE}>
               <td>{(paginaActual - 1) * porPagina + i + 1}</td>
               <td>{v.CLAVE}</td>
-              <td>{new Date(v.FECHA).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
+              <td>{new Date(v.FECHA).toLocaleDateString('es-MX')}</td>
               <td>{v.CLIENTE}</td>
               <td>{v.EMPLEADO}</td>
               <td>{v.SUCURSAL}</td>
+              <td>{v.METODO_PAGO}</td>
+              <td>{v.PROMOCION ?? '—'}</td>
               <td><button className="btn btn-warning" onClick={() => handleEditar(v)}><FaEdit /></button></td>
               <td><button className="btn btn-danger" onClick={() => handleEliminar(v.CLAVE)}><FaTrash /></button></td>
             </tr>
@@ -142,7 +153,6 @@ const VentasTable = () => {
         </tbody>
       </table>
 
-      {/* Paginación mejorada */}
       <ul className="pagination justify-content-center">
         <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
           <button className="page-link" onClick={() => setPaginaActual(1)}>⏮</button>
@@ -176,7 +186,6 @@ const VentasTable = () => {
         <FaPlus />
       </button>
 
-      {/* Formulario modal */}
       {mostrarFormulario && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -212,12 +221,24 @@ const VentasTable = () => {
                   ))}
                 </select>
               </div>
+              <div className="col-md-6">
+                <select name="CLAVE_METODO_PAGO" value={form.CLAVE_METODO_PAGO || ''} onChange={handleChange} className="form-select" required>
+                  <option value="">Seleccionar Método de Pago</option>
+                  {metodosPago.map(m => (
+                    <option key={m.CLAVE} value={m.CLAVE}>{m.NOMBRE}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <select name="CLAVE_PROMOCION" value={form.CLAVE_PROMOCION || ''} onChange={handleChange} className="form-select">
+                  <option value="">Sin promoción</option>
+                  {promociones.map(p => (
+                    <option key={p.CLAVE} value={p.CLAVE}>Descuento: {p.DESCUENTO}%</option>
+                  ))}
+                </select>
+              </div>
               <div className="col-12 d-grid mt-2">
-                <button
-                  type="submit"
-                  className="btn btn-success"
-                  disabled={!form.FECHA || !form.CLAVE_CLIENTE || !form.CLAVE_EMPLEADO || !form.CLAVE_SUCURSAL}
-                >
+                <button type="submit" className="btn btn-success">
                   {editando ? 'Actualizar' : 'Guardar'}
                 </button>
               </div>

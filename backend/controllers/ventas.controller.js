@@ -7,15 +7,19 @@ const getVentas = async (req, res) => {
     conn = await oracledb.getConnection();
     const result = await conn.execute(
       `SELECT 
-  v.CLAVE,
-  v.FECHA,
-  c.NOMBRE || ' ' || c.APELLIDO_PAT AS CLIENTE,
-  e.NOMBRE || ' ' || e.APELLIDO_PAT AS EMPLEADO,
-  s.NOMBRE AS SUCURSAL
-FROM VENTA v
-JOIN CLIENTE c ON v.CLAVE_CLIENTE = c.CLAVE
-JOIN EMPLEADO e ON v.CLAVE_EMPLEADO = e.CLAVE
-JOIN SUCURSAL s ON v.CLAVE_SUCURSAL = s.CLAVE`,
+        v.CLAVE,
+        v.FECHA,
+        c.NOMBRE || ' ' || c.APELLIDO_PAT AS CLIENTE,
+        e.NOMBRE || ' ' || e.APELLIDO_PAT AS EMPLEADO,
+        s.NOMBRE AS SUCURSAL,
+        m.NOMBRE AS METODO_PAGO,
+        p.DESCUENTO AS PROMOCION
+      FROM VENTA v
+      JOIN CLIENTE c ON v.CLAVE_CLIENTE = c.CLAVE
+      JOIN EMPLEADO e ON v.CLAVE_EMPLEADO = e.CLAVE
+      JOIN SUCURSAL s ON v.CLAVE_SUCURSAL = s.CLAVE
+      JOIN METODO_PAGO m ON v.CLAVE_METODO_PAGO = m.CLAVE
+      LEFT JOIN PROMOCION p ON v.CLAVE_PROMOCION = p.CLAVE`,
       [],
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
@@ -24,13 +28,7 @@ JOIN SUCURSAL s ON v.CLAVE_SUCURSAL = s.CLAVE`,
     console.error('Error al obtener ventas:', err);
     res.status(500).json({ error: 'Error al obtener ventas', details: err.message });
   } finally {
-    if (conn) {
-      try {
-        await conn.close();
-      } catch (err) {
-        console.error('Error al cerrar conexión:', err);
-      }
-    }
+    if (conn) await conn.close().catch(console.error);
   }
 };
 
@@ -41,15 +39,21 @@ const getVentaPorClave = async (req, res) => {
   try {
     conn = await oracledb.getConnection();
     const result = await conn.execute(
-      `SELECT v.CLAVE, v.FECHA,
-              c.NOMBRE || ' ' || c.APELLIDO_PAT AS CLIENTE,
-              e.NOMBRE || ' ' || e.APELLIDO_PAT AS EMPLEADO,
-              s.NOMBRE AS SUCURSAL
-       FROM VENTA v
-       JOIN CLIENTE c ON v.CLAVE_CLIENTE = c.CLAVE
-       JOIN EMPLEADO e ON v.CLAVE_EMPLEADO = e.CLAVE
-       JOIN SUCURSAL s ON v.CLAVE_SUCURSAL = s.CLAVE
-       WHERE v.CLAVE = :clave`,
+      `SELECT 
+        v.CLAVE,
+        v.FECHA,
+        c.NOMBRE || ' ' || c.APELLIDO_PAT AS CLIENTE,
+        e.NOMBRE || ' ' || e.APELLIDO_PAT AS EMPLEADO,
+        s.NOMBRE AS SUCURSAL,
+        m.NOMBRE AS METODO_PAGO,
+        p.DESCUENTO AS PROMOCION
+      FROM VENTA v
+      JOIN CLIENTE c ON v.CLAVE_CLIENTE = c.CLAVE
+      JOIN EMPLEADO e ON v.CLAVE_EMPLEADO = e.CLAVE
+      JOIN SUCURSAL s ON v.CLAVE_SUCURSAL = s.CLAVE
+      JOIN METODO_PAGO m ON v.CLAVE_METODO_PAGO = m.CLAVE
+      LEFT JOIN PROMOCION p ON v.CLAVE_PROMOCION = p.CLAVE
+      WHERE v.CLAVE = :clave`,
       [clave],
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
@@ -62,13 +66,7 @@ const getVentaPorClave = async (req, res) => {
     console.error('Error al obtener venta:', err);
     res.status(500).json({ error: 'Error al obtener venta', details: err.message });
   } finally {
-    if (conn) {
-      try {
-        await conn.close();
-      } catch (err) {
-        console.error('Error al cerrar conexión:', err);
-      }
-    }
+    if (conn) await conn.close().catch(console.error);
   }
 };
 
@@ -92,13 +90,7 @@ const crearVenta = async (req, res) => {
     console.error('Error al crear venta:', err);
     res.status(500).json({ error: 'Error al crear venta', details: err.message });
   } finally {
-    if (conn) {
-      try {
-        await conn.close();
-      } catch (err) {
-        console.error('Error al cerrar conexión:', err);
-      }
-    }
+    if (conn) await conn.close().catch(console.error);
   }
 };
 
@@ -133,13 +125,7 @@ const actualizarVenta = async (req, res) => {
     console.error('Error al actualizar venta:', err);
     res.status(500).json({ error: 'Error al actualizar venta', details: err.message });
   } finally {
-    if (conn) {
-      try {
-        await conn.close();
-      } catch (err) {
-        console.error('Error al cerrar conexión:', err);
-      }
-    }
+    if (conn) await conn.close().catch(console.error);
   }
 };
 
@@ -150,7 +136,7 @@ const eliminarVenta = async (req, res) => {
   try {
     conn = await oracledb.getConnection();
     const result = await conn.execute(
-  `DELETE FROM VENTA WHERE CLAVE = :clave`
+      `DELETE FROM VENTA WHERE CLAVE = :clave`,
       [clave],
       { autoCommit: true }
     );
@@ -163,13 +149,7 @@ const eliminarVenta = async (req, res) => {
     console.error('Error al eliminar venta:', err);
     res.status(500).json({ error: 'Error al eliminar venta', details: err.message });
   } finally {
-    if (conn) {
-      try {
-        await conn.close();
-      } catch (err) {
-        console.error('Error al cerrar conexión:', err);
-      }
-    }
+    if (conn) await conn.close().catch(console.error);
   }
 };
 

@@ -1,36 +1,34 @@
 import React from "react";
 
-const DireccionSucursalTable = () => {
-  const direcciones = [
+const PedidosTable = () => {
+  const pedidos = [
     {
-      clave: "DS001",
+      clave: "P001",
+      fecha: "2024-06-15",
+      cliente: "Carlos Pérez",
       sucursal: "Joyería Centro",
-      calle: "Av. Reforma",
-      numero: "101",
-      colonia: "Centro",
-      cp: "06000",
-      ciudad: "CDMX",
-      estado: "Ciudad de México",
+      envio: "Envío Express",
+      distribuidor: "DHL",
+      estado: "En proceso",
     },
     {
-      clave: "DS002",
-      sucursal: "Joyería Sur",
-      calle: "Calle Juárez",
-      numero: "205",
-      colonia: "Del Valle",
-      cp: "50120",
-      ciudad: "Toluca",
-      estado: "Estado de México",
+      clave: "P002",
+      fecha: "2024-06-18",
+      cliente: "Ana García",
+      sucursal: "Joyería Gran Sur",
+      envio: "Retiro en sucursal",
+      distribuidor: "Interno",
+      estado: "Entregado",
     },
   ];
 
   return (
     <div className="container mt-4">
-      <h2 className="text-center mb-4">Direcciones de Sucursales</h2>
+      <h2 className="text-center mb-4">Catálogo de Pedidos</h2>
 
       <input
         type="text"
-        placeholder="Buscar por colonia, ciudad o CP..."
+        placeholder="Buscar por cliente, sucursal o estado..."
         className="form-control mb-3"
       />
 
@@ -39,29 +37,27 @@ const DireccionSucursalTable = () => {
           <tr>
             <th>#</th>
             <th>Clave</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
             <th>Sucursal</th>
-            <th>Calle</th>
-            <th>Número</th>
-            <th>Colonia</th>
-            <th>CP</th>
-            <th>Ciudad</th>
+            <th>Tipo de Envío</th>
+            <th>Distribuidor</th>
             <th>Estado</th>
             <th>Editar</th>
             <th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
-          {direcciones.map((dir, index) => (
-            <tr key={dir.clave}>
+          {pedidos.map((p, index) => (
+            <tr key={p.clave}>
               <td>{index + 1}</td>
-              <td>{dir.clave}</td>
-              <td>{dir.sucursal}</td>
-              <td>{dir.calle}</td>
-              <td>{dir.numero}</td>
-              <td>{dir.colonia}</td>
-              <td>{dir.cp}</td>
-              <td>{dir.ciudad}</td>
-              <td>{dir.estado}</td>
+              <td>{p.clave}</td>
+              <td>{p.fecha}</td>
+              <td>{p.cliente}</td>
+              <td>{p.sucursal}</td>
+              <td>{p.envio}</td>
+              <td>{p.distribuidor}</td>
+              <td>{p.estado}</td>
               <td>
                 <button className="btn btn-warning btn-sm">
                   <i className="fas fa-edit"></i>
@@ -112,4 +108,4 @@ const DireccionSucursalTable = () => {
   );
 };
 
-export default DireccionSucursalTable;
+export default PedidosTable;

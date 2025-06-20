@@ -22,6 +22,9 @@ import DetalleVentaTable from './components/DetalleVentaTable';
 import PromocionesTable from './components/PromocionesTable';
 import MetodosPagoTable from './components/MetodosPagoTable';
 
+import PedidosTable from './components/PedidosTable';
+import DetallePedidoTable from './components/DetallePedidoTable';
+
 import ComprasTable from './components/ComprasTable';
 import DetalleCompraTable from './components/DetalleCompraTable';
 import DistribuidoresTable from './components/DistribuidoresTable';
@@ -41,7 +44,9 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/" element={<Protegido><Layout /></Protegido>}>
+
+        {/* Rutas protegidas */}
+        <Route element={<Protegido><Layout /></Protegido>}>
           {/* Catálogo */}
           <Route path="/joyas" element={<JoyasTable />} />
           <Route path="/tipos" element={<TiposJoyaTable />} />
@@ -64,6 +69,10 @@ function App() {
           <Route path="/promociones" element={<PromocionesTable />} />
           <Route path="/metodos_pago" element={<MetodosPagoTable />} />
 
+          {/* Pedidos */}
+          <Route path="/pedidos" element={<PedidosTable />} />
+          <Route path="/detalle_pedido" element={<DetallePedidoTable />} />
+
           {/* Compras */}
           <Route path="/compras" element={<ComprasTable />} />
           <Route path="/detalle_compra" element={<DetalleCompraTable />} />
@@ -80,4 +89,3 @@ function App() {
 }
 
 export default App;
-

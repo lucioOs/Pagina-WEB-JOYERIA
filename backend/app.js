@@ -11,6 +11,9 @@ const sucursalesRoutes = require('./routes/sucursales.routes');
 const tipoJoyaRoutes = require('./routes/tipoJoya.routes');
 const diseniadoresRoutes = require('./routes/diseniadores.routes');
 const inventarioRoutes = require('./routes/inventario.routes');
+const metodosPagoRoutes = require('./routes/metodosPago.routes');
+const promocionesRoutes = require('./routes/promociones.routes');
+const detalleVentaRoutes = require('./routes/detalleVenta.routes');
 
 const genericRoutes = require('./routes/generic.routes'); // ✅ Rutas CRUD automáticas
 
@@ -30,7 +33,9 @@ app.use('/api/sucursales', sucursalesRoutes);
 app.use('/api/tipojoya', tipoJoyaRoutes);
 app.use('/api/diseniadores', diseniadoresRoutes);
 app.use('/api/inventario', inventarioRoutes);
-
+app.use('/api/metodospago', metodosPagoRoutes);
+app.use('/api/promociones', promocionesRoutes);
+app.use('/api/detalleventa', detalleVentaRoutes);
 
 // Rutas genéricas (¡puedes usar /api/material, /api/inventario, etc!)
 app.use('/api', genericRoutes);

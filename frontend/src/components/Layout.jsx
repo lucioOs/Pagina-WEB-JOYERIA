@@ -60,6 +60,13 @@ const Layout = () => {
         { path: '/direccion_sucursal', label: 'Dirección Sucursal', icon: <FaStore /> },
         { path: '/red_social', label: 'Red Social', icon: <FaStore /> }
       ]
+    },
+    {
+      titulo: 'Pedidos',
+      items: [
+        { path: '/pedidos', label: 'Pedidos', icon: <FaTruck /> },
+        { path: '/detalle_pedido', label: 'Detalle Pedido', icon: <FaTruck /> }
+      ]
     }
   ];
 
