@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
-import Swal from 'sweetalert2';
 
 const VentasTable = () => {
   const [ventas, setVentas] = useState([]);
@@ -62,7 +61,7 @@ const VentasTable = () => {
       setMostrarFormulario(false);
       setEditando(false);
     } else {
-      Swal.fire('Error', 'No se pudo guardar la venta', 'error');
+      alert('Error al guardar la venta');
     }
   };
 
@@ -88,21 +87,13 @@ const VentasTable = () => {
   };
 
   const handleEliminar = async (clave) => {
-    const confirm = await Swal.fire({
-      title: '¿Eliminar venta?',
-      text: "No podrás deshacer esta acción",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar'
-    });
-
-    if (confirm.isConfirmed) {
+    const confirm = window.confirm('¿Estás seguro de eliminar esta venta?');
+    if (confirm) {
       const res = await fetch(`${URL}/${clave}`, { method: 'DELETE' });
       if (res.ok) {
         obtenerVentas();
-        Swal.fire('Eliminado', 'La venta ha sido eliminada', 'success');
+      } else {
+        alert('Error al eliminar');
       }
     }
   };
@@ -111,8 +102,7 @@ const VentasTable = () => {
     v.CLIENTE?.toLowerCase().includes(busqueda.toLowerCase()) ||
     v.EMPLEADO?.toLowerCase().includes(busqueda.toLowerCase()) ||
     v.SUCURSAL?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    v.METODO_PAGO?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    v.CLAVE?.toLowerCase().includes(busqueda.toLowerCase())
+    v.METODO_PAGO?.toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const totalPaginas = Math.ceil(filtrar.length / porPagina);
@@ -129,25 +119,36 @@ const VentasTable = () => {
         onChange={(e) => setBusqueda(e.target.value)}
       />
 
-      <table className="table table-bordered text-center">
+      <table className="table table-bordered text-center align-middle">
         <thead className="table-dark">
           <tr>
-            <th>#</th><th>CLAVE</th><th>FECHA</th><th>CLIENTE</th><th>EMPLEADO</th><th>SUCURSAL</th><th>MÉTODO</th><th>PROMOCIÓN</th><th>Editar</th><th>Eliminar</th>
+            <th>#</th>
+            <th>FECHA</th>
+            <th>CLIENTE</th>
+            <th>EMPLEADO</th>
+            <th>SUCURSAL</th>
+            <th>MÉTODO</th>
+            <th>PROMOCIÓN</th>
+            <th>Editar</th>
+            <th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
           {ventasPagina.map((v, i) => (
             <tr key={v.CLAVE}>
               <td>{(paginaActual - 1) * porPagina + i + 1}</td>
-              <td>{v.CLAVE}</td>
               <td>{new Date(v.FECHA).toLocaleDateString('es-MX')}</td>
               <td>{v.CLIENTE}</td>
               <td>{v.EMPLEADO}</td>
               <td>{v.SUCURSAL}</td>
               <td>{v.METODO_PAGO}</td>
               <td>{v.PROMOCION ?? '—'}</td>
-              <td><button className="btn btn-warning" onClick={() => handleEditar(v)}><FaEdit /></button></td>
-              <td><button className="btn btn-danger" onClick={() => handleEliminar(v.CLAVE)}><FaTrash /></button></td>
+              <td>
+                <button className="btn btn-warning" onClick={() => handleEditar(v)}><FaEdit /></button>
+              </td>
+              <td>
+                <button className="btn btn-danger" onClick={() => handleEliminar(v.CLAVE)}><FaTrash /></button>
+              </td>
             </tr>
           ))}
         </tbody>

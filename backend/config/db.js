@@ -10,6 +10,7 @@ async function iniciarConexion() {
       poolMax: 10,
       poolTimeout: 60,
       queueTimeout: 120000
+     
     });
     console.log('✅ Conexión a Oracle exitosa');
   } catch (error) {

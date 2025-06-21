@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Login from './components/Login';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 // Tablas
 import JoyasTable from './components/JoyasTable';

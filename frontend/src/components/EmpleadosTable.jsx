@@ -1,3 +1,4 @@
+// src/components/EmpleadosTable.jsx
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 
@@ -93,7 +94,6 @@ const EmpleadosTable = () => {
   const empleadosFiltrados = empleados.filter(emp => {
     const texto = busqueda.toLowerCase();
     return (
-      (emp.CLAVE || '').toLowerCase().includes(texto) ||
       (emp.NOMBRE || '').toLowerCase().includes(texto) ||
       (emp.APELLIDO_PAT || '').toLowerCase().includes(texto) ||
       (emp.CORREO || '').toLowerCase().includes(texto) ||
@@ -107,9 +107,10 @@ const EmpleadosTable = () => {
   return (
     <div className="container position-relative">
       <h2 className="text-center my-4">Catálogo de Empleados</h2>
+
       <input
         type="text"
-        placeholder="Buscar..."
+        placeholder="Buscar por nombre, correo o rol..."
         className="form-control mb-3"
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
@@ -118,21 +119,29 @@ const EmpleadosTable = () => {
       <table className="table table-bordered text-center align-middle">
         <thead className="table-dark">
           <tr>
-            <th>#</th><th>CLAVE</th><th>NOMBRE</th><th>APELLIDO PAT</th><th>CORREO</th><th>ROL</th>
-            <th>Editar</th><th>Eliminar</th>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Apellido Paterno</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Editar</th>
+            <th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
           {empleadosPagina.map((emp, i) => (
             <tr key={emp.CLAVE}>
               <td>{(paginaActual - 1) * porPagina + i + 1}</td>
-              <td>{emp.CLAVE}</td>
               <td>{emp.NOMBRE}</td>
               <td>{emp.APELLIDO_PAT}</td>
               <td>{emp.CORREO}</td>
               <td>{emp.ROL}</td>
-              <td><button className="btn btn-warning" onClick={() => handleEditar(emp)}><FaEdit /></button></td>
-              <td><button className="btn btn-danger" onClick={() => handleEliminar(emp.CLAVE)}><FaTrash /></button></td>
+              <td>
+                <button className="btn btn-warning" onClick={() => handleEditar(emp)}><FaEdit /></button>
+              </td>
+              <td>
+                <button className="btn btn-danger" onClick={() => handleEliminar(emp.CLAVE)}><FaTrash /></button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -159,6 +168,7 @@ const EmpleadosTable = () => {
         </li>
       </ul>
 
+      {/* Botón flotante */}
       <button
         title="Agregar nuevo empleado"
         className="btn btn-success rounded-circle position-fixed shadow"
@@ -172,6 +182,7 @@ const EmpleadosTable = () => {
         <FaPlus />
       </button>
 
+      {/* Modal */}
       {mostrarFormulario && (
         <div className="modal-overlay">
           <div className="modal-content">

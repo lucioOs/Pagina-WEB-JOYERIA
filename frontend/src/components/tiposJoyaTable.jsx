@@ -21,15 +21,23 @@ const TipoJoyaTable = () => {
   }, []);
 
   const obtenerTipos = async () => {
-    const res = await fetch(URL);
-    const data = await res.json();
-    setTipos(data);
+    try {
+      const res = await fetch(URL);
+      const data = await res.json();
+      setTipos(data);
+    } catch (err) {
+      console.error('❌ Error al obtener tipos de joya:', err);
+    }
   };
 
   const obtenerMateriales = async () => {
-    const res = await fetch(URL_MATERIAL);
-    const data = await res.json();
-    setMateriales(data);
+    try {
+      const res = await fetch(URL_MATERIAL);
+      const data = await res.json();
+      setMateriales(data);
+    } catch (err) {
+      console.error('❌ Error al obtener materiales:', err);
+    }
   };
 
   const generarClave = () => {
@@ -49,19 +57,21 @@ const TipoJoyaTable = () => {
       ? form
       : { CLAVE: generarClave(), ...form };
 
-    const res = await fetch(endpoint, {
-      method: metodo,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    try {
+      const res = await fetch(endpoint, {
+        method: metodo,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-    if (res.ok) {
+      if (!res.ok) throw new Error(await res.text());
+
       obtenerTipos();
       setForm({});
       setMostrarFormulario(false);
       setEditando(false);
-    } else {
-      alert('❌ Error al guardar');
+    } catch (err) {
+      alert(`❌ ${err.message}`);
     }
   };
 
@@ -77,9 +87,13 @@ const TipoJoyaTable = () => {
   };
 
   const handleEliminar = async (clave) => {
-    if (window.confirm('¿Eliminar tipo de joya?')) {
+    if (!window.confirm('¿Eliminar tipo de joya?')) return;
+    try {
       const res = await fetch(`${URL}/${clave}`, { method: 'DELETE' });
-      if (res.ok) obtenerTipos();
+      if (!res.ok) throw new Error(await res.text());
+      obtenerTipos();
+    } catch (err) {
+      alert(`❌ ${err.message}`);
     }
   };
 
@@ -94,6 +108,7 @@ const TipoJoyaTable = () => {
   return (
     <div className="container position-relative">
       <h2 className="text-center my-4">Catálogo de Tipos de Joya</h2>
+      
       <input
         type="text"
         placeholder="Buscar por nombre o material..."
@@ -102,22 +117,32 @@ const TipoJoyaTable = () => {
         onChange={(e) => setBusqueda(e.target.value)}
       />
 
-      <table className="table table-bordered text-center align-middle">
+      <table className="table table-hover table-bordered text-center align-middle">
         <thead className="table-dark">
           <tr>
-            <th>#</th><th>CLAVE</th><th>NOMBRE</th><th>MATERIAL</th>
-            <th>Editar</th><th>Eliminar</th>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Material</th>
+            <th>Editar</th>
+            <th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
           {tiposPagina.map((t, i) => (
             <tr key={t.CLAVE}>
               <td>{(paginaActual - 1) * porPagina + i + 1}</td>
-              <td>{t.CLAVE}</td>
               <td>{t.NOMBRE}</td>
               <td>{t.MATERIAL}</td>
-              <td><button className="btn btn-warning" onClick={() => handleEditar(t)}><FaEdit /></button></td>
-              <td><button className="btn btn-danger" onClick={() => handleEliminar(t.CLAVE)}><FaTrash /></button></td>
+              <td>
+                <button className="btn btn-warning" onClick={() => handleEditar(t)}>
+                  <FaEdit />
+                </button>
+              </td>
+              <td>
+                <button className="btn btn-danger" onClick={() => handleEliminar(t.CLAVE)}>
+                  <FaTrash />
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -144,6 +169,7 @@ const TipoJoyaTable = () => {
         </li>
       </ul>
 
+      {/* Botón flotante para agregar */}
       <button
         title="Agregar tipo de joya"
         className="btn btn-success rounded-circle position-fixed shadow"
@@ -157,27 +183,47 @@ const TipoJoyaTable = () => {
         <FaPlus />
       </button>
 
+      {/* Modal para agregar/editar */}
       {mostrarFormulario && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="d-flex justify-content-between mb-2">
               <h5>{editando ? 'Editar tipo de joya' : 'Agregar tipo de joya'}</h5>
-              <button onClick={() => setMostrarFormulario(false)} className="btn"><FaTimes /></button>
+              <button onClick={() => setMostrarFormulario(false)} className="btn">
+                <FaTimes />
+              </button>
             </div>
             <form className="row g-2" onSubmit={handleSubmit}>
               <div className="col-md-6">
-                <input name="NOMBRE" placeholder="Nombre" value={form.NOMBRE || ''} onChange={handleChange} className="form-control" required />
+                <input
+                  name="NOMBRE"
+                  placeholder="Nombre"
+                  value={form.NOMBRE || ''}
+                  onChange={handleChange}
+                  className="form-control"
+                  required
+                />
               </div>
               <div className="col-md-6">
-                <select name="MATERIAL_CLAVE" value={form.MATERIAL_CLAVE || ''} onChange={handleChange} className="form-select" required>
+                <select
+                  name="MATERIAL_CLAVE"
+                  value={form.MATERIAL_CLAVE || ''}
+                  onChange={handleChange}
+                  className="form-select"
+                  required
+                >
                   <option value="">Seleccionar material</option>
                   {materiales.map(m => (
-                    <option key={m.CLAVE} value={m.CLAVE}>{m.NOMBRE}</option>
+                    <option key={m.CLAVE} value={m.CLAVE}>
+                      {m.NOMBRE}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="col-12 d-grid mt-2">
-                <button type="submit" className="btn btn-success">{editando ? 'Actualizar' : 'Guardar'}</button>
+                <button type="submit" className="btn btn-success">
+                  {editando ? 'Actualizar' : 'Guardar'}
+                </button>
               </div>
             </form>
           </div>

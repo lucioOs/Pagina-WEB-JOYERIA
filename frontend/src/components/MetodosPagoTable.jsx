@@ -1,18 +1,24 @@
-// src/components/MetodosPagoTable.jsx
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
 
 const MetodosPagoTable = () => {
   const [metodos, setMetodos] = useState([]);
-  const [form, setForm] = useState({ CLAVE: '', NOMBRE: '' });
+  const [form, setForm] = useState({ NOMBRE: '' });
   const [editando, setEditando] = useState(false);
+  const [claveEditando, setClaveEditando] = useState(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [paginaActual, setPaginaActual] = useState(1);
   const porPagina = 10;
 
+  const URL = 'http://localhost:3000/api/metodospago';
+
+  useEffect(() => {
+    fetchMetodos();
+  }, []);
+
   const fetchMetodos = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/metodospago');
+      const res = await fetch(URL);
       const data = await res.json();
       setMetodos(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -20,9 +26,11 @@ const MetodosPagoTable = () => {
     }
   };
 
-  useEffect(() => {
-    fetchMetodos();
-  }, []);
+  const generarClave = () => {
+    const claves = metodos.map(m => parseInt(m.CLAVE)).filter(n => !isNaN(n));
+    const siguiente = Math.max(...claves, 0) + 1;
+    return siguiente;
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -30,45 +38,45 @@ const MetodosPagoTable = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const url = editando
-      ? `http://localhost:3000/api/metodospago/${form.CLAVE}`
-      : 'http://localhost:3000/api/metodospago';
 
-    const method = editando ? 'PUT' : 'POST';
+    const payload = editando
+      ? { ...form }
+      : { CLAVE: generarClave(), ...form };
 
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      });
+    const res = await fetch(editando ? `${URL}/${claveEditando}` : URL, {
+      method: editando ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-      if (!res.ok) throw new Error('Error al guardar');
-
+    if (res.ok) {
       fetchMetodos();
-      setForm({ CLAVE: '', NOMBRE: '' });
+      setForm({ NOMBRE: '' });
       setMostrarFormulario(false);
       setEditando(false);
-    } catch (err) {
-      alert('❌ ' + err.message);
+      setClaveEditando(null);
+    } else {
+      alert('❌ Error al guardar el método de pago');
     }
   };
 
   const handleEditar = (item) => {
-    setForm(item);
+    setForm({ NOMBRE: item.NOMBRE });
     setEditando(true);
     setMostrarFormulario(true);
+    setClaveEditando(item.CLAVE);
   };
 
   const handleEliminar = async (clave) => {
     if (!window.confirm('¿Eliminar este método de pago?')) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/metodospago/${clave}`, {
-        method: 'DELETE'
-      });
-      if (!res.ok) throw new Error('Error al eliminar');
-      fetchMetodos();
+      const res = await fetch(`${URL}/${clave}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchMetodos();
+      } else {
+        alert('❌ Error al eliminar');
+      }
     } catch (err) {
       alert('❌ ' + err.message);
     }
@@ -85,7 +93,6 @@ const MetodosPagoTable = () => {
         <thead className="table-dark">
           <tr>
             <th>#</th>
-            <th>Clave</th>
             <th>Nombre</th>
             <th>Editar</th>
             <th>Eliminar</th>
@@ -95,7 +102,6 @@ const MetodosPagoTable = () => {
           {registrosPagina.map((item, i) => (
             <tr key={item.CLAVE}>
               <td>{(paginaActual - 1) * porPagina + i + 1}</td>
-              <td>{item.CLAVE}</td>
               <td>{item.NOMBRE}</td>
               <td>
                 <button className="btn btn-warning" onClick={() => handleEditar(item)}><FaEdit /></button>
@@ -132,7 +138,7 @@ const MetodosPagoTable = () => {
         className="btn btn-success rounded-circle position-fixed shadow"
         style={{ bottom: 40, right: 40 }}
         onClick={() => {
-          setForm({ CLAVE: '', NOMBRE: '' });
+          setForm({ NOMBRE: '' });
           setEditando(false);
           setMostrarFormulario(true);
         }}
@@ -149,19 +155,7 @@ const MetodosPagoTable = () => {
               <button onClick={() => setMostrarFormulario(false)} className="btn"><FaTimes /></button>
             </div>
             <form className="row g-2" onSubmit={handleSubmit}>
-              <div className="col-md-4">
-                <input
-                  name="CLAVE"
-                  type="number"
-                  className="form-control"
-                  value={form.CLAVE}
-                  onChange={handleChange}
-                  placeholder="Clave"
-                  required
-                  disabled={editando}
-                />
-              </div>
-              <div className="col-md-8">
+              <div className="col-12">
                 <input
                   name="NOMBRE"
                   type="text"

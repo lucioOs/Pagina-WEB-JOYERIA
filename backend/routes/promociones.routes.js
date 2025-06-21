@@ -1,13 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const createCrudHandlers = require('../controllers/genericCrud.controller');
+const {
+  getPromociones,
+  createPromocion,
+  updatePromocion,
+  deletePromocion
+} = require('../controllers/promociones.controller');
 
-const handlers = createCrudHandlers('PROMOCION', ['CLAVE']);
+// GET - Obtener todas las promociones
+router.get('/', getPromociones);
 
-router.get('/', handlers.getAll);
-router.get('/:clave', handlers.getById);
-router.post('/', handlers.create);
-router.put('/:clave', handlers.update);
-router.delete('/:clave', handlers.remove);
+// POST - Crear una nueva promoción
+router.post('/', createPromocion);
+
+// PUT - Actualizar promoción
+router.put('/:clave', updatePromocion);
+
+// DELETE - Eliminar promoción
+router.delete('/:clave', deletePromocion);
 
 module.exports = router;

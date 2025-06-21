@@ -32,9 +32,13 @@ const JoyasTable = () => {
   }, []);
 
   const obtenerJoyas = async () => {
-    const res = await fetch(URL);
-    const data = await res.json();
-    setJoyas(data);
+    try {
+      const res = await fetch(URL);
+      const data = await res.json();
+      if (Array.isArray(data)) setJoyas(data);
+    } catch (err) {
+      console.error('❌ Error al obtener joyas:', err);
+    }
   };
 
   const handleChange = (e) => {
@@ -43,7 +47,6 @@ const JoyasTable = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const joyaData = {
       nombre: form.nombre || null,
       descripcion: form.descripcion || null,
@@ -67,12 +70,12 @@ const JoyasTable = () => {
 
       if (!res.ok) throw new Error(await res.text());
 
-      obtenerJoyas();
+      await obtenerJoyas();
       setForm({});
       setMostrarFormulario(false);
       setEditando(false);
-    } catch (error) {
-      alert(`❌ ${error.message}`);
+    } catch (err) {
+      alert(`❌ ${err.message}`);
     }
   };
 
@@ -98,17 +101,13 @@ const JoyasTable = () => {
   };
 
   const handleEliminar = async (clave) => {
-    if (!window.confirm("¿Estás seguro de eliminar esta joya?")) return;
-
+    if (!window.confirm("¿Eliminar esta joya?")) return;
     try {
       const res = await fetch(`${URL}/${clave}`, { method: "DELETE" });
-
       if (!res.ok) throw new Error(await res.text());
-
-      alert("✅ Joya eliminada correctamente");
-      obtenerJoyas();
-    } catch (error) {
-      alert(`❌ ${error.message}`);
+      await obtenerJoyas();
+    } catch (err) {
+      alert(`❌ ${err.message}`);
     }
   };
 
@@ -133,11 +132,19 @@ const JoyasTable = () => {
         onChange={(e) => setBusqueda(e.target.value)}
       />
 
-      <table className="table table-bordered text-center align-middle">
+      <table className="table table-hover table-bordered text-center align-middle">
         <thead className="table-dark">
           <tr>
-            <th>#</th><th>Nombre</th><th>Descripción</th><th>Precio</th><th>Inventario</th>
-            <th>Tipo</th><th>Material</th><th>Diseñador</th><th>Editar</th><th>Eliminar</th>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Precio</th>
+            <th>Inventario</th>
+            <th>Tipo</th>
+            <th>Material</th>
+            <th>Diseñador</th>
+            <th>Editar</th>
+            <th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
@@ -158,7 +165,6 @@ const JoyasTable = () => {
         </tbody>
       </table>
 
-      {/* Paginación */}
       <ul className="pagination justify-content-center">
         <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
           <button className="page-link" onClick={() => setPaginaActual(1)}>⏮</button>
@@ -179,7 +185,6 @@ const JoyasTable = () => {
         </li>
       </ul>
 
-      {/* Botón flotante */}
       <button
         className="btn btn-success rounded-circle position-fixed shadow"
         style={{ bottom: 40, right: 40 }}
@@ -193,7 +198,6 @@ const JoyasTable = () => {
         <FaPlus />
       </button>
 
-      {/* Formulario */}
       {mostrarFormulario && (
         <div className="modal-overlay">
           <div className="modal-content">
