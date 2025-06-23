@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import { BASE_URL } from '../config'; // ✅ importación de BASE_URL
 
 const MetodosPagoTable = () => {
   const [metodos, setMetodos] = useState([]);
@@ -10,8 +11,8 @@ const MetodosPagoTable = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const porPagina = 10;
 
-  const URL = 'http://localhost:3000/api/metodospago';
-
+  const URL = `${BASE_URL}/metodospago`; // ✅ URL dinámica
+  
   useEffect(() => {
     fetchMetodos();
   }, []);

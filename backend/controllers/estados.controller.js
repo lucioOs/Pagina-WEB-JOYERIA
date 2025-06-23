@@ -1,18 +1,18 @@
 // backend/controllers/estados.controller.js
-const { oracledb } = require('../config/db');
+const { getConnection } = require('../config/db');
 
 const getEstados = async (req, res) => {
   let conn;
   try {
-    conn = await oracledb.getConnection();
+    conn = await getConnection();
     const result = await conn.execute(
-      `SELECT CLAVE, NOMBRE FROM CLAVE_ESTADO ORDER BY CLAVE`,
+      'SELECT CLAVE, NOMBRE FROM CLAVE_ESTADO',
       [],
-      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      { outFormat: conn.OUT_FORMAT_OBJECT }
     );
     res.json(result.rows);
   } catch (err) {
-    console.error('Error al obtener estados:', err);
+    console.error('Error en /api/estados:', err);
     res.status(500).json({ error: 'Error al obtener estados' });
   } finally {
     if (conn) await conn.close();
@@ -20,3 +20,4 @@ const getEstados = async (req, res) => {
 };
 
 module.exports = { getEstados };
+

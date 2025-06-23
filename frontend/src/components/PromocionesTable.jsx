@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
+import { BASE_URL } from '../config'; // ← aquí se importa
 
 const PromocionesTable = () => {
   const [promociones, setPromociones] = useState([]);
@@ -12,7 +13,11 @@ const PromocionesTable = () => {
   const [cargando, setCargando] = useState(false);
   const porPagina = 10;
 
-  const URL = 'http://localhost:3000/api/promociones';
+  const URL = `${BASE_URL}/promociones`; // ← aquí se usa
+
+  // ... (el resto del código sigue igual)
+
+
 
   useEffect(() => {
     obtenerPromociones();

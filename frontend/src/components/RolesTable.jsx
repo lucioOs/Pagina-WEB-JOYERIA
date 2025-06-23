@@ -1,60 +1,123 @@
-import React from "react";
+import React, { useEffect, useState } from 'react';
+import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import { BASE_URL } from '../config';
+import axios from 'axios'; // Agrega esto
+
 
 const RolesTable = () => {
-  const roles = [
-    {
-      clave: "R001",
-      nombre: "Administrador",
-      descripcion: "Acceso total al sistema, incluyendo configuración.",
-    },
-    {
-      clave: "R002",
-      nombre: "Vendedor",
-      descripcion: "Puede registrar ventas y consultar inventario.",
-    },
-    {
-      clave: "R003",
-      nombre: "Cajero",
-      descripcion: "Accede a ventas y métodos de pago.",
-    },
-  ];
+  const [roles, setRoles] = useState([]);
+  const [form, setForm] = useState({});
+  const [editando, setEditando] = useState(false);
+  const [claveEditando, setClaveEditando] = useState(null);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  const [paginaActual, setPaginaActual] = useState(1);
+  const porPagina = 10;
+
+  const URL = `${BASE_URL}/roles`;
+
+  useEffect(() => {
+    obtenerRoles();
+  }, []);
+
+  const obtenerRoles = async () => {
+    const res = await fetch(URL);
+    const data = await res.json();
+    setRoles(data);
+  };
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      NOMBRE: form.NOMBRE
+    };
+
+    const metodo = editando ? 'PUT' : 'POST';
+    const endpoint = editando ? `${URL}/${claveEditando}` : URL;
+
+    const res = await fetch(endpoint, {
+      method: metodo,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      obtenerRoles();
+      setForm({});
+      setEditando(false);
+      setMostrarFormulario(false);
+    } else {
+      const msg = await res.text();
+      alert('❌ Error: ' + msg);
+    }
+  };
+
+  const handleEditar = (rol) => {
+    setForm({ NOMBRE: rol.NOMBRE });
+    setClaveEditando(rol.CLAVE);
+    setEditando(true);
+    setMostrarFormulario(true);
+  };
+
+ const handleEliminar = async (clave) => {
+  if (!window.confirm("¿Estás seguro de eliminar este rol?")) return;
+
+  try {
+    const res = await axios.delete(`${BASE_URL}/roles/${clave}`);
+    alert(res.data.mensaje);
+    obtenerRoles(); // o cargarRoles(), según el nombre que usas
+  } catch (error) {
+    const mensaje = error.response?.data?.error || '❌ Error desconocido al eliminar el rol.';
+    alert(mensaje);
+  }
+};
+
+
+  const filtrados = roles.filter(r =>
+    (r.NOMBRE || '').toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  const totalPaginas = Math.ceil(filtrados.length / porPagina);
+  const pagina = filtrados.slice((paginaActual - 1) * porPagina, paginaActual * porPagina);
 
   return (
-    <div className="container mt-4">
-      <h2 className="text-center mb-4">Catálogo de Roles</h2>
+    <div className="container position-relative">
+      <h2 className="text-center my-4">Catálogo de Roles</h2>
 
       <input
         type="text"
-        placeholder="Buscar por nombre o descripción..."
+        placeholder="Buscar por nombre..."
         className="form-control mb-3"
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
       />
 
-      <table className="table table-bordered table-hover text-center">
+      <table className="table table-bordered text-center align-middle">
         <thead className="table-dark">
           <tr>
             <th>#</th>
-            <th>Clave</th>
             <th>Nombre</th>
-            <th>Descripción</th>
             <th>Editar</th>
             <th>Eliminar</th>
           </tr>
         </thead>
         <tbody>
-          {roles.map((rol, index) => (
-            <tr key={rol.clave}>
-              <td>{index + 1}</td>
-              <td>{rol.clave}</td>
-              <td>{rol.nombre}</td>
-              <td>{rol.descripcion}</td>
+          {pagina.map((r, i) => (
+            <tr key={r.CLAVE}>
+              <td>{(paginaActual - 1) * porPagina + i + 1}</td>
+              <td>{r.NOMBRE}</td>
               <td>
-                <button className="btn btn-warning btn-sm">
-                  <i className="fas fa-edit"></i>
+                <button className="btn btn-warning" onClick={() => handleEditar(r)}>
+                  <FaEdit />
                 </button>
               </td>
               <td>
-                <button className="btn btn-danger btn-sm">
-                  <i className="fas fa-trash-alt"></i>
+                <button className="btn btn-danger" onClick={() => handleEliminar(r.CLAVE)}>
+                  <FaTrash />
                 </button>
               </td>
             </tr>
@@ -62,37 +125,65 @@ const RolesTable = () => {
         </tbody>
       </table>
 
-      <div className="d-flex justify-content-center">
-        <nav>
-          <ul className="pagination">
-            <li className="page-item disabled">
-              <button className="page-link">«</button>
-            </li>
-            <li className="page-item active">
-              <button className="page-link">1</button>
-            </li>
-            <li className="page-item">
-              <button className="page-link">2</button>
-            </li>
-            <li className="page-item">
-              <button className="page-link">»</button>
-            </li>
-          </ul>
-        </nav>
-      </div>
+      <ul className="pagination justify-content-center">
+        <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(1)}>⏮</button>
+        </li>
+        <li className={`page-item ${paginaActual === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(paginaActual - 1)}>◀</button>
+        </li>
+        {[...Array(totalPaginas)].map((_, i) => (
+          <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? 'active' : ''}`}>
+            <button className="page-link" onClick={() => setPaginaActual(i + 1)}>{i + 1}</button>
+          </li>
+        ))}
+        <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(paginaActual + 1)}>▶</button>
+        </li>
+        <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => setPaginaActual(totalPaginas)}>⏭</button>
+        </li>
+      </ul>
 
       <button
-        className="btn btn-success rounded-circle"
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
-          width: "50px",
-          height: "50px",
+        className="btn btn-success rounded-circle position-fixed shadow"
+        style={{ bottom: 40, right: 40 }}
+        onClick={() => {
+          setForm({});
+          setEditando(false);
+          setMostrarFormulario(true);
         }}
       >
-        <i className="fas fa-plus"></i>
+        <FaPlus />
       </button>
+
+      {mostrarFormulario && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="d-flex justify-content-between mb-2">
+              <h5>{editando ? 'Editar rol' : 'Agregar nuevo rol'}</h5>
+              <button onClick={() => setMostrarFormulario(false)} className="btn"><FaTimes /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="row g-2">
+              <div className="col-12">
+                <input
+                  name="NOMBRE"
+                  placeholder="Nombre del rol"
+                  value={form.NOMBRE || ''}
+                  onChange={handleChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="col-12 d-grid mt-2">
+                <button type="submit" className="btn btn-success">
+                  {editando ? 'Actualizar' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import { BASE_URL } from '../config';
 
 const JoyasTable = () => {
   const [joyas, setJoyas] = useState([]);
@@ -14,13 +15,16 @@ const JoyasTable = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const porPagina = 10;
 
-  const URL = 'http://localhost:3000/api/joyas';
+  const JOYAS_URL = `${BASE_URL}/joyas`;
+  const TIPOS_URL = `${BASE_URL}/tipojoya`;
+  const MATERIALES_URL = `${BASE_URL}/materiales`;
+  const DISENIADORES_URL = `${BASE_URL}/diseniadores`;
 
   useEffect(() => {
     obtenerJoyas();
-    fetch(`${URL}/tipos`).then(res => res.json()).then(setTipos);
-    fetch(`${URL}/materiales`).then(res => res.json()).then(setMateriales);
-    fetch(`http://localhost:3000/api/diseniadores`)
+    fetch(TIPOS_URL).then(res => res.json()).then(setTipos);
+    fetch(MATERIALES_URL).then(res => res.json()).then(setMateriales);
+    fetch(DISENIADORES_URL)
       .then(res => res.json())
       .then(data => {
         const formateados = data.map(d => ({
@@ -33,7 +37,7 @@ const JoyasTable = () => {
 
   const obtenerJoyas = async () => {
     try {
-      const res = await fetch(URL);
+      const res = await fetch(JOYAS_URL);
       const data = await res.json();
       if (Array.isArray(data)) setJoyas(data);
     } catch (err) {
@@ -59,7 +63,7 @@ const JoyasTable = () => {
     };
 
     const metodo = editando ? 'PUT' : 'POST';
-    const endpoint = editando ? `${URL}/${claveEditando}` : URL;
+    const endpoint = editando ? `${JOYAS_URL}/${claveEditando}` : JOYAS_URL;
 
     try {
       const res = await fetch(endpoint, {
@@ -103,7 +107,7 @@ const JoyasTable = () => {
   const handleEliminar = async (clave) => {
     if (!window.confirm("¿Eliminar esta joya?")) return;
     try {
-      const res = await fetch(`${URL}/${clave}`, { method: "DELETE" });
+      const res = await fetch(`${JOYAS_URL}/${clave}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
       await obtenerJoyas();
     } catch (err) {

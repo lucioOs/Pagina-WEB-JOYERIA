@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import { BASE_URL } from '../config'; // ✅ Importamos BASE_URL
 
 const DiseniadoresTable = () => {
   const [diseniadores, setDiseniadores] = useState([]);
@@ -9,13 +10,12 @@ const DiseniadoresTable = () => {
   const [apPat, setApPat] = useState('');
   const [editando, setEditando] = useState(null);
 
-  // Paginación
   const itemsPorPagina = 10;
   const [paginaActual, setPaginaActual] = useState(1);
 
   const obtenerDiseniadores = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/api/diseniadores');
+      const res = await axios.get(`${BASE_URL}/diseniadores`);
       setDiseniadores(res.data);
     } catch (err) {
       console.error('Error al obtener diseñadores:', err);
@@ -29,7 +29,7 @@ const DiseniadoresTable = () => {
   const handleAgregar = async () => {
     if (!nombre.trim()) return alert('El nombre es obligatorio');
     try {
-      await axios.post('http://localhost:3000/api/diseniadores', {
+      await axios.post(`${BASE_URL}/diseniadores`, {
         NOMBRE: nombre.trim(),
         AP_PAT: apPat.trim()
       });
@@ -49,7 +49,7 @@ const DiseniadoresTable = () => {
 
   const handleActualizar = async () => {
     try {
-      await axios.put(`http://localhost:3000/api/diseniadores/${editando}`, {
+      await axios.put(`${BASE_URL}/diseniadores/${editando}`, {
         NOMBRE: nombre.trim(),
         AP_PAT: apPat.trim()
       });
@@ -65,7 +65,7 @@ const DiseniadoresTable = () => {
   const handleEliminar = async (clave) => {
     if (window.confirm('¿Estás seguro de eliminar este diseñador?')) {
       try {
-        await axios.delete(`http://localhost:3000/api/diseniadores/${clave}`);
+        await axios.delete(`${BASE_URL}/diseniadores/${clave}`);
         obtenerDiseniadores();
       } catch (err) {
         console.error('Error al eliminar diseñador:', err);
@@ -73,7 +73,6 @@ const DiseniadoresTable = () => {
     }
   };
 
-  // Filtrar y paginar
   const filtrados = diseniadores.filter(d =>
     d.NOMBRE.toLowerCase().includes(busqueda.toLowerCase()) ||
     d.AP_PAT?.toLowerCase().includes(busqueda.toLowerCase())
@@ -126,7 +125,6 @@ const DiseniadoresTable = () => {
         </tbody>
       </table>
 
-      {/* Paginación */}
       <div className="d-flex justify-content-center mb-3">
         <nav>
           <ul className="pagination">
@@ -145,7 +143,6 @@ const DiseniadoresTable = () => {
         </nav>
       </div>
 
-      {/* Formulario */}
       <div className="card p-3">
         <h5 className="mb-3">{editando ? 'Editar Diseñador' : 'Agregar Diseñador'}</h5>
         <div className="row">

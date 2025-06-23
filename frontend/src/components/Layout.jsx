@@ -25,14 +25,13 @@ const Layout = () => {
       titulo: 'Clientes',
       items: [
         { path: '/clientes', label: 'Clientes', icon: <FaUsers /> },
-        { path: '/direccion_clientes', label: 'Dirección Clientes', icon: <FaUsers /> }
+      
       ]
     },
     {
       titulo: 'Empleados',
       items: [
         { path: '/empleados', label: 'Empleados', icon: <FaUserTie /> },
-        { path: '/direccion_empleados', label: 'Dirección Empleados', icon: <FaUserTie /> },
         { path: '/roles', label: 'Roles', icon: <FaCogs /> }
       ]
     },

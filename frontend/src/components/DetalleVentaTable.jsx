@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { BASE_URL } from "../config";
 
 const DetalleVentaTable = () => {
   const [detalles, setDetalles] = useState([]);
@@ -28,7 +29,7 @@ const DetalleVentaTable = () => {
 
   const obtenerDetalles = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/api/detalleventa");
+      const res = await axios.get(`${BASE_URL}/detalleventa`);
       setDetalles(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error("Error al obtener detalles:", error);
@@ -37,7 +38,7 @@ const DetalleVentaTable = () => {
 
   const obtenerVentas = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/api/ventas");
+      const res = await axios.get(`${BASE_URL}/ventas`);
       setVentas(res.data || []);
     } catch (error) {
       console.error("Error al obtener ventas:", error);
@@ -46,7 +47,7 @@ const DetalleVentaTable = () => {
 
   const obtenerJoyas = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/api/joyas");
+      const res = await axios.get(`${BASE_URL}/joyas`);
       setJoyas(res.data || []);
     } catch (error) {
       console.error("Error al obtener joyas:", error);
@@ -87,11 +88,11 @@ const DetalleVentaTable = () => {
     if (!detalleEditando) return;
     try {
       await axios.put(
-        `http://localhost:3000/api/detalleventa/${detalleEditando.CLAVE_VENTA}/${detalleEditando.CLAVE_JOYA}`,
-        { CANTIDAD: nuevaCantidad }
+        `${BASE_URL}/detalleventa/${detalleEditando.CLAVE_VENTA}/${detalleEditando.CLAVE_JOYA}`,
+        { CANTIDAD: Number(nuevaCantidad) }
       );
       await obtenerDetalles();
-      setDetalleEditando(null);
+      handleCancelarEdicion();
     } catch (error) {
       console.error("Error al actualizar detalle:", error);
     }
@@ -99,9 +100,7 @@ const DetalleVentaTable = () => {
 
   const handleEliminar = async (claveVenta, claveJoya) => {
     try {
-      await axios.delete(
-        `http://localhost:3000/api/detalleventa/${claveVenta}/${claveJoya}`
-      );
+      await axios.delete(`${BASE_URL}/detalleventa/${claveVenta}/${claveJoya}`);
       await obtenerDetalles();
     } catch (error) {
       console.error("Error al eliminar:", error);
@@ -109,8 +108,17 @@ const DetalleVentaTable = () => {
   };
 
   const handleAgregarDetalle = async () => {
+    const { CLAVE_VENTA, CLAVE_JOYA, CANTIDAD } = nuevoDetalle;
+    if (!CLAVE_VENTA || !CLAVE_JOYA || !CANTIDAD) {
+      return alert("Todos los campos son obligatorios.");
+    }
+
     try {
-      await axios.post("http://localhost:3000/api/detalleventa", nuevoDetalle);
+      await axios.post(`${BASE_URL}/detalleventa`, {
+        CLAVE_VENTA: Number(CLAVE_VENTA),
+        CLAVE_JOYA: Number(CLAVE_JOYA),
+        CANTIDAD: Number(CANTIDAD)
+      });
       await obtenerDetalles();
       setMostrarFormulario(false);
       setNuevoDetalle({ CLAVE_VENTA: "", CLAVE_JOYA: "", CANTIDAD: "" });
@@ -152,28 +160,16 @@ const DetalleVentaTable = () => {
               <td>{detalle.CLIENTE || "—"}</td>
               <td>{detalle.EMPLEADO || "—"}</td>
               <td>{detalle.SUCURSAL || "—"}</td>
-              <td>
-                {detalle.FECHA
-                  ? new Date(detalle.FECHA).toLocaleDateString("es-MX")
-                  : "—"}
-              </td>
+              <td>{detalle.FECHA ? new Date(detalle.FECHA).toLocaleDateString("es-MX") : "—"}</td>
               <td>{detalle.JOYA}</td>
               <td>{detalle.CANTIDAD}</td>
               <td>{`$${Number(detalle.PRECIO_UNITARIO).toFixed(2)}`}</td>
               <td>{`$${Number(detalle.TOTAL).toFixed(2)}`}</td>
               <td>
-                <button
-                  className="btn btn-warning btn-sm me-2"
-                  onClick={() => handleEditarClick(detalle)}
-                >
+                <button className="btn btn-warning btn-sm me-2" onClick={() => handleEditarClick(detalle)}>
                   <FaEdit />
                 </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() =>
-                    handleEliminar(detalle.CLAVE_VENTA, detalle.CLAVE_JOYA)
-                  }
-                >
+                <button className="btn btn-danger btn-sm" onClick={() => handleEliminar(detalle.CLAVE_VENTA, detalle.CLAVE_JOYA)}>
                   <FaTrash />
                 </button>
               </td>
@@ -184,26 +180,18 @@ const DetalleVentaTable = () => {
 
       {/* Paginación */}
       <div className="d-flex justify-content-center my-3">
-        <nav>
-          <ul className="pagination">
-            {Array.from({ length: totalPaginas }, (_, i) => (
-              <li
-                key={i + 1}
-                className={`page-item ${paginaActual === i + 1 ? "active" : ""}`}
-              >
-                <button
-                  className="page-link"
-                  onClick={() => cambiarPagina(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <ul className="pagination">
+          {Array.from({ length: totalPaginas }, (_, i) => (
+            <li key={i + 1} className={`page-item ${paginaActual === i + 1 ? "active" : ""}`}>
+              <button className="page-link" onClick={() => cambiarPagina(i + 1)}>
+                {i + 1}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* Formulario editar */}
+      {/* Formulario editar cantidad */}
       {detalleEditando && (
         <div className="card card-body mt-4">
           <h5>Editar Cantidad</h5>
@@ -228,16 +216,14 @@ const DetalleVentaTable = () => {
         </div>
       )}
 
-      {/* Formulario agregar */}
+      {/* Formulario agregar detalle */}
       {mostrarFormulario && (
         <div className="card card-body mt-4">
           <h5>Agregar nuevo detalle</h5>
           <select
             className="form-control mb-2"
             value={nuevoDetalle.CLAVE_VENTA}
-            onChange={(e) =>
-              setNuevoDetalle({ ...nuevoDetalle, CLAVE_VENTA: e.target.value })
-            }
+            onChange={(e) => setNuevoDetalle({ ...nuevoDetalle, CLAVE_VENTA: e.target.value })}
           >
             <option value="">Selecciona una venta</option>
             {ventas.map((venta) => (
@@ -250,9 +236,7 @@ const DetalleVentaTable = () => {
           <select
             className="form-control mb-2"
             value={nuevoDetalle.CLAVE_JOYA}
-            onChange={(e) =>
-              setNuevoDetalle({ ...nuevoDetalle, CLAVE_JOYA: e.target.value })
-            }
+            onChange={(e) => setNuevoDetalle({ ...nuevoDetalle, CLAVE_JOYA: e.target.value })}
           >
             <option value="">Selecciona una joya</option>
             {joyas.map((joya) => (
@@ -267,15 +251,10 @@ const DetalleVentaTable = () => {
             placeholder="Cantidad"
             className="form-control mb-2"
             value={nuevoDetalle.CANTIDAD}
-            onChange={(e) =>
-              setNuevoDetalle({ ...nuevoDetalle, CANTIDAD: e.target.value })
-            }
+            onChange={(e) => setNuevoDetalle({ ...nuevoDetalle, CANTIDAD: e.target.value })}
           />
           <div className="d-flex justify-content-end">
-            <button
-              className="btn btn-secondary me-2"
-              onClick={() => setMostrarFormulario(false)}
-            >
+            <button className="btn btn-secondary me-2" onClick={() => setMostrarFormulario(false)}>
               Cancelar
             </button>
             <button className="btn btn-success" onClick={handleAgregarDetalle}>

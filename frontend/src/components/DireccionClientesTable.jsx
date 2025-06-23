@@ -1,6 +1,7 @@
 // IMPORTS
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 
 const DireccionClientesTable = () => {
   const [direcciones, setDirecciones] = useState([]);
@@ -18,7 +19,6 @@ const DireccionClientesTable = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const direccionesPorPagina = 5;
 
-  // Cargar datos
   useEffect(() => {
     obtenerDirecciones();
     obtenerClientes();
@@ -27,7 +27,7 @@ const DireccionClientesTable = () => {
 
   const obtenerDirecciones = async () => {
     try {
-      const res = await axios.get('/api/direccionclientes');
+      const res = await axios.get(`${BASE_URL}/direccionclientes`);
       setDirecciones(res.data);
     } catch (err) {
       console.error('Error al obtener direcciones', err);
@@ -36,7 +36,7 @@ const DireccionClientesTable = () => {
 
   const obtenerClientes = async () => {
     try {
-      const res = await axios.get('/api/clientes');
+      const res = await axios.get(`${BASE_URL}/clientes`);
       setClientes(res.data);
     } catch (err) {
       console.error('Error al obtener clientes', err);
@@ -45,7 +45,7 @@ const DireccionClientesTable = () => {
 
   const obtenerEstados = async () => {
     try {
-      const res = await axios.get('/api/estados'); // <- Asegúrate que esta ruta exista
+      const res = await axios.get(`${BASE_URL}/estados`);
       setEstados(res.data);
     } catch (err) {
       console.error('Error al obtener estados', err);
@@ -68,9 +68,9 @@ const DireccionClientesTable = () => {
   const handleGuardar = async () => {
     try {
       if (editando) {
-        await axios.put(`/api/direccionclientes/${claveEditando}`, formulario);
+        await axios.put(`${BASE_URL}/direccionclientes/${claveEditando}`, formulario);
       } else {
-        await axios.post('/api/direccionclientes', formulario);
+        await axios.post(`${BASE_URL}/direccionclientes`, formulario);
       }
       obtenerDirecciones();
       limpiarFormulario();
@@ -89,7 +89,7 @@ const DireccionClientesTable = () => {
 
   const handleEliminar = async clave => {
     try {
-      await axios.delete(`/api/direccionclientes/${clave}`);
+      await axios.delete(`${BASE_URL}/direccionclientes/${clave}`);
       obtenerDirecciones();
     } catch (err) {
       console.error('Error al eliminar dirección', err);

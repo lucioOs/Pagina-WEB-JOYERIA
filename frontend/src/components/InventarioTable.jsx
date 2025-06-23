@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import { BASE_URL } from '../config';
 
 const InventarioTable = () => {
   const [inventario, setInventario] = useState([]);
@@ -13,12 +14,12 @@ const InventarioTable = () => {
 
   useEffect(() => {
     fetchInventario();
-    fetch('http://localhost:3000/api/joyas').then(res => res.json()).then(setJoyas);
-    fetch('http://localhost:3000/api/sucursales').then(res => res.json()).then(setSucursales);
+    fetch(`${BASE_URL}/joyas`).then(res => res.json()).then(setJoyas);
+    fetch(`${BASE_URL}/sucursales`).then(res => res.json()).then(setSucursales);
   }, []);
 
   const fetchInventario = async () => {
-    const res = await fetch('http://localhost:3000/api/inventario');
+    const res = await fetch(`${BASE_URL}/inventario`);
     const data = await res.json();
     setInventario(Array.isArray(data) ? data : []);
   };
@@ -27,38 +28,38 @@ const InventarioTable = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const url = editando
-    ? `http://localhost:3000/api/inventario/${form.CLAVE_JOYA}/${form.CLAVE_SUCURSAL}`
-    : `http://localhost:3000/api/inventario`;
+    const url = editando
+      ? `${BASE_URL}/inventario/${form.CLAVE_JOYA}/${form.CLAVE_SUCURSAL}`
+      : `${BASE_URL}/inventario`;
 
-  const method = editando ? 'PUT' : 'POST';
-  const payload = editando
-    ? { CANTIDAD: Number(form.CANTIDAD) }
-    : {
-        CLAVE_JOYA: form.CLAVE_JOYA,
-        CLAVE_SUCURSAL: form.CLAVE_SUCURSAL,
-        CANTIDAD: Number(form.CANTIDAD),
-      };
+    const method = editando ? 'PUT' : 'POST';
+    const payload = editando
+      ? { CANTIDAD: Number(form.CANTIDAD) }
+      : {
+          CLAVE_JOYA: form.CLAVE_JOYA,
+          CLAVE_SUCURSAL: form.CLAVE_SUCURSAL,
+          CANTIDAD: Number(form.CANTIDAD),
+        };
 
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) throw new Error('Error al guardar');
-    fetchInventario();
-    setForm({ CLAVE_JOYA: '', CLAVE_SUCURSAL: '', CANTIDAD: '' });
-    setMostrarFormulario(false);
-    setEditando(false);
-  } catch (err) {
-    alert(`❌ ${err.message}`);
-  }
-};
+      if (!res.ok) throw new Error('Error al guardar');
+      fetchInventario();
+      setForm({ CLAVE_JOYA: '', CLAVE_SUCURSAL: '', CANTIDAD: '' });
+      setMostrarFormulario(false);
+      setEditando(false);
+    } catch (err) {
+      alert(`❌ ${err.message}`);
+    }
+  };
 
   const handleEditar = (item) => {
     setForm(item);
@@ -69,7 +70,7 @@ const handleSubmit = async (e) => {
   const handleEliminar = async (claveJoya, claveSucursal) => {
     if (!window.confirm('¿Eliminar este registro?')) return;
     try {
-      const res = await fetch(`http://localhost:3000/api/inventario/${claveJoya}/${claveSucursal}`, {
+      const res = await fetch(`${BASE_URL}/inventario/${claveJoya}/${claveSucursal}`, {
         method: 'DELETE'
       });
       if (!res.ok) throw new Error('Error al eliminar');
@@ -146,40 +147,40 @@ const handleSubmit = async (e) => {
             </div>
             <form className="row g-2" onSubmit={handleSubmit}>
               <div className="col-md-5">
-  <select
-    name="CLAVE_JOYA"
-    className="form-select"
-    value={form.CLAVE_JOYA}
-    onChange={handleChange}
-    required
-    disabled={editando} // ⛔️ bloquea el campo si se está editando
-  >
-    <option value="">Selecciona Joya</option>
-    {joyas.map(j => (
-      <option key={j.CLAVE} value={j.CLAVE}>
-        {j.NOMBRE}
-      </option>
-    ))}
-  </select>
-</div>
+                <select
+                  name="CLAVE_JOYA"
+                  className="form-select"
+                  value={form.CLAVE_JOYA}
+                  onChange={handleChange}
+                  required
+                  disabled={editando}
+                >
+                  <option value="">Selecciona Joya</option>
+                  {joyas.map(j => (
+                    <option key={j.CLAVE} value={j.CLAVE}>
+                      {j.NOMBRE}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-<div className="col-md-5">
-  <select
-    name="CLAVE_SUCURSAL"
-    className="form-select"
-    value={form.CLAVE_SUCURSAL}
-    onChange={handleChange}
-    required
-    disabled={editando} // ⛔️ bloquea el campo si se está editando
-  >
-    <option value="">Selecciona Sucursal</option>
-    {sucursales.map(s => (
-      <option key={s.CLAVE} value={s.CLAVE}>
-        {s.NOMBRE}
-      </option>
-    ))}
-  </select>
-</div>
+              <div className="col-md-5">
+                <select
+                  name="CLAVE_SUCURSAL"
+                  className="form-select"
+                  value={form.CLAVE_SUCURSAL}
+                  onChange={handleChange}
+                  required
+                  disabled={editando}
+                >
+                  <option value="">Selecciona Sucursal</option>
+                  {sucursales.map(s => (
+                    <option key={s.CLAVE} value={s.CLAVE}>
+                      {s.NOMBRE}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <div className="col-md-2">
                 <input name="CANTIDAD" type="number" className="form-control" value={form.CANTIDAD} onChange={handleChange} placeholder="Cantidad" required />

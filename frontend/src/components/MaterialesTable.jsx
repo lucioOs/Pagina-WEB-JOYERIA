@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { BASE_URL } from "../config";
 
 const MaterialesTable = () => {
   const [materiales, setMateriales] = useState([]);
@@ -8,7 +9,7 @@ const MaterialesTable = () => {
   const [editando, setEditando] = useState(null);
 
   const cargarMateriales = async () => {
-    const res = await axios.get("http://localhost:3000/api/materiales");
+    const res = await axios.get(`${BASE_URL}/materiales`);
     setMateriales(res.data);
   };
 
@@ -22,7 +23,7 @@ const MaterialesTable = () => {
 
   const handleAgregar = async () => {
     if (!formulario.NOMBRE.trim()) return;
-    await axios.post("http://localhost:3000/api/materiales", formulario);
+    await axios.post(`${BASE_URL}/materiales`, formulario);
     setFormulario({ NOMBRE: "" });
     cargarMateriales();
   };
@@ -34,7 +35,7 @@ const MaterialesTable = () => {
 
   const handleActualizar = async () => {
     if (!formulario.NOMBRE.trim()) return;
-    await axios.put(`http://localhost:3000/api/materiales/${editando}`, formulario);
+    await axios.put(`${BASE_URL}/materiales/${editando}`, formulario);
     setEditando(null);
     setFormulario({ NOMBRE: "" });
     cargarMateriales();
@@ -42,7 +43,7 @@ const MaterialesTable = () => {
 
   const handleEliminar = async (clave) => {
     if (!window.confirm("¿Estás seguro de eliminar este material?")) return;
-    await axios.delete(`http://localhost:3000/api/materiales/${clave}`);
+    await axios.delete(`${BASE_URL}/materiales/${clave}`);
     cargarMateriales();
   };
 
@@ -66,7 +67,6 @@ const MaterialesTable = () => {
         <thead className="table-dark">
           <tr>
             <th>#</th>
-            <th>Clave</th>
             <th>Nombre</th>
             <th>Editar</th>
             <th>Eliminar</th>
@@ -76,15 +76,20 @@ const MaterialesTable = () => {
           {materialesFiltrados.map((mat, index) => (
             <tr key={mat.CLAVE}>
               <td>{index + 1}</td>
-              <td>{mat.CLAVE}</td>
               <td>{mat.NOMBRE}</td>
               <td>
-                <button className="btn btn-warning btn-sm" onClick={() => handleEditar(mat)}>
+                <button
+                  className="btn btn-warning btn-sm"
+                  onClick={() => handleEditar(mat)}
+                >
                   <i className="fas fa-edit"></i>
                 </button>
               </td>
               <td>
-                <button className="btn btn-danger btn-sm" onClick={() => handleEliminar(mat.CLAVE)}>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleEliminar(mat.CLAVE)}
+                >
                   <i className="fas fa-trash-alt"></i>
                 </button>
               </td>

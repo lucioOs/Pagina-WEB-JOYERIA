@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import { BASE_URL } from '../config'; // ✅ IMPORTANTE
 
 const TipoJoyaTable = () => {
   const [tipos, setTipos] = useState([]);
@@ -12,8 +13,8 @@ const TipoJoyaTable = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const porPagina = 10;
 
-  const URL = 'http://localhost:3000/api/tipojoya';
-  const URL_MATERIAL = 'http://localhost:3000/api/materiales';
+  const URL = `${BASE_URL}/tipojoya`;         // ✅ YA USANDO BASE_URL
+  const URL_MATERIAL = `${BASE_URL}/materiales`; // ✅ TAMBIÉN
 
   useEffect(() => {
     obtenerTipos();

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import { BASE_URL } from '../config';
 
 const VentasTable = () => {
   const [ventas, setVentas] = useState([]);
@@ -16,15 +17,15 @@ const VentasTable = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const porPagina = 10;
 
-  const URL = 'http://localhost:3000/api/ventas';
+  const URL = `${BASE_URL}/ventas`;
 
   useEffect(() => {
     obtenerVentas();
-    fetch('http://localhost:3000/api/clientes').then(res => res.json()).then(setClientes);
-    fetch('http://localhost:3000/api/empleados').then(res => res.json()).then(setEmpleados);
-    fetch('http://localhost:3000/api/sucursales').then(res => res.json()).then(setSucursales);
-    fetch('http://localhost:3000/api/metodospago').then(res => res.json()).then(setMetodosPago);
-    fetch('http://localhost:3000/api/promociones').then(res => res.json()).then(setPromociones);
+    fetch(`${BASE_URL}/clientes`).then(res => res.json()).then(setClientes);
+    fetch(`${BASE_URL}/empleados`).then(res => res.json()).then(setEmpleados);
+    fetch(`${BASE_URL}/sucursales`).then(res => res.json()).then(setSucursales);
+    fetch(`${BASE_URL}/metodospago`).then(res => res.json()).then(setMetodosPago);
+    fetch(`${BASE_URL}/promociones`).then(res => res.json()).then(setPromociones);
   }, []);
 
   const obtenerVentas = async () => {
